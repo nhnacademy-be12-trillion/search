@@ -3,9 +3,9 @@ server:
 
 elasticsearch:
   scheme: http
-  host: s4.java21.net
+  host: ${ES_PORT}
   port: 9200
-  username: elastic
-  password: nhnacademy123!
+  username: ${ES_USERNAME}
+  password: ${ES_PASSWORD}
   index:
-    book: nhnacademy_books
+    book: ${ES_BOOK_INDEX:nhnacademy_books}

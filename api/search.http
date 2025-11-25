@@ -1,0 +1,60 @@
+### 1. 기본 검색 (BM25 + 필드 가중치, 정확도 순)
+# - sort 파라미터 생략 시 RELEVANCE(정확도순) 기본
+# - gateway 통해 부를 거면 10400, search-service 직접 부르면 search 포트로 변경
+GET http://127.0.0.1:10416/api/books/search?query=한강&page=0&size=10
+Accept: application/json
+
+###
+### 2. 정렬 옵션별 검색 (NEW / LOW_PRICE / HIGH_PRICE / POPULARITY / RATING / REVIEW_COUNT)
+
+### 2-1. 신상품 순 (발행일 기준 내림차순)
+GET http://127.0.0.1:10416/api/books/search?query=한강&sort=NEW&page=0&size=10
+Accept: application/json
+
+###
+### 2-2. 최저가 순 (가격 오름차순, 가격 null은 뒤로)
+GET http://127.0.0.1:10416/api/books/search?query=한강&sort=LOW_PRICE&page=0&size=10
+Accept: application/json
+
+###
+### 2-3. 최고가 순 (가격 내림차순, 가격 null은 뒤로)
+GET http://127.0.0.1:10416/api/books/search?query=한강&sort=HIGH_PRICE&page=0&size=10
+Accept: application/json
+
+###
+### 2-4. 인기도 순 (popularityScore desc) - 미구현
+# TODO: 인기도 집계/인덱싱 구현 후 활성화
+GET http://127.0.0.1:10416/api/books/search?query=한강&sort=POPULARITY&page=0&size=10
+Accept: application/json
+
+###
+### 2-5. 평점 순 (ratingCount >= 100 + ratingAvg desc) - 미구현
+# TODO: ratingAvg / ratingCount / ratingForSort 필드 인덱싱 후 사용
+GET http://127.0.0.1:10416/api/books/search?query=한강&sort=RATING&page=0&size=10
+Accept: application/json
+
+###
+### 2-6. 리뷰 많은 순 (reviewCount desc) - 미구현
+# TODO: reviewCount 필드 인덱싱 후 사용
+GET http://127.0.0.1:10416/api/books/search?query=한강&sort=REVIEW_COUNT&page=0&size=10
+Accept: application/json
+
+###
+### 3. (미구현) KNN 유사도 검색 – 버전 2에서 구현 예정
+# 예: 기준 도서(bookId)와 비슷한 책 k개
+GET http://127.0.0.1:10416/api/books/search/knn?bookId=3153205&k=10
+Accept: application/json
+
+###
+### 4. (미구현) AI Rerank 검색 – 버전 3에서 구현 예정
+# 1차 BM25 결과 n개 가져온 뒤, LLM으로 rerank 하는 API 스펙용
+POST http://127.0.0.1:10416/api/books/search/rerank
+Content-Type: application/json
+Accept: application/json
+
+{
+  "query": "올해 읽기 좋은 따뜻한 에세이 추천해줘",
+  "page": 0,
+  "size": 10,
+  "candidateSize": 50
+}

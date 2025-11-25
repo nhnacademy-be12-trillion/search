@@ -40,7 +40,7 @@ public class ElasticsearchPingController {
 
         return elasticsearchWebClient.post()
                 .uri("/{index}/_search", properties.getIndex().getBook())
-                .contentType(MediaType.APPLICATION_JSON)   // 있어도 되고 없어도 되지만 명시해두면 깔끔
+                .contentType(MediaType.APPLICATION_JSON)
                 .accept(MediaType.APPLICATION_JSON)
                 .bodyValue(body)
                 .retrieve()

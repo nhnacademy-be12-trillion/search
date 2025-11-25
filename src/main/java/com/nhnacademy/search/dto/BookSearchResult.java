@@ -1,13 +1,13 @@
 package com.nhnacademy.search.dto;
 
 public record BookSearchResult(
-        long id,
+        String id,
         String isbn,
         String title,
         String author,
         String publisher,
-        int price,
+        Integer price,
         String imageUrl,
         String editionPublishDate,
-        float score // ES _score
+        Float score // ES _score
 ) {}
