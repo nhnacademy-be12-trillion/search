@@ -72,12 +72,14 @@ public class BookSearchService {
                 "title^100",
                 "metadata.author^90",
                 "authorName^90",
+                "metadata.tags^80",
                 "isbn^70",
                 "metadata.isbn^70",
                 "metadata.publisher^60",
                 "publisherName^60",
                 "metadata.content^50",
-                "bookContent^50"
+                "bookContent^50",
+                "metadata.reviewSummary^40"
         ));
 
         root.put("query", Map.of("multi_match", multiMatch));
@@ -122,9 +124,18 @@ public class BookSearchService {
                 field = "metadata.price";
                 order = "desc";
             }
-            case POPULARITY, RATING, REVIEW_COUNT -> {
-                // 추후 구현 예정 기능
-                return List.of();
+            // 아직 미구현
+            case POPULARITY -> {
+                field = "popularityScore";
+                order = "desc";
+            }
+            case RATING -> {
+                field = "ratingAvg";
+                order = "desc";
+            }
+            case REVIEW_COUNT -> {
+                field = "reviewCount";
+                order = "desc";
             }
             default -> {
                 return List.of();

@@ -7,7 +7,7 @@ public enum BookSortOption {
     HIGH_PRICE,     // 높은 가격순
 
 
-    // 나중에 구현할 정렬 기준 (지금 불가능)
+    // 나중에 구현할 정렬 기준 (미구현)
      POPULARITY,    // 인기도
      RATING,        // 평점
      REVIEW_COUNT,  // 리뷰 많은 순

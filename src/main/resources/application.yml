@@ -3,7 +3,7 @@ server:
 
 elasticsearch:
   scheme: http
-  host: ${ES_PORT}
+  host: ${ES_HOST}
   port: 9200
   username: ${ES_USERNAME}
   password: ${ES_PASSWORD}
