@@ -9,17 +9,17 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 @ConfigurationProperties(prefix = "elasticsearch")
 public class ElasticsearchProperties {
 
-    private String scheme;   // http
-    private String host;     // s4.java21.net
-    private int port;        // 9200
-    private String username; // elastic
-    private String password; // nhnacademy123!
+    private String scheme;   
+    private String host;    
+    private int port;
+    private String username;
+    private String password;
 
     private Index index = new Index();
 
     @Getter
     @Setter
     public static class Index {
-        private String book; // nhnacademy_books
+        private String book;
     }
 }
