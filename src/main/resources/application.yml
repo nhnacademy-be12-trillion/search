@@ -9,3 +9,10 @@ elasticsearch:
   password: ${ES_PASSWORD}
   index:
     book: ${ES_BOOK_INDEX:nhnacademy_books}
+
+spring:
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://${DB_ADDRESS}/${DB_NAME}?serverTimezone=Asia/Seoul&characterEncoding=UTF-8
+    username: ${DB_USER}
+    password: ${DB_PASSWORD}
