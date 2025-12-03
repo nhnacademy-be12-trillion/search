@@ -28,11 +28,9 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 class BookSearchServiceTest {
 
-    // WebClient 체이닝(post().uri().bodyValue().retrieve()...) 때문에 DEEP_STUB 사용
     @Mock(answer = Answers.RETURNS_DEEP_STUBS)
     WebClient elasticsearchWebClient;
 
-    // properties.getIndex().getBook() 체이닝도 DEEP_STUB 사용
     @Mock(answer = Answers.RETURNS_DEEP_STUBS)
     ElasticsearchProperties properties;
 

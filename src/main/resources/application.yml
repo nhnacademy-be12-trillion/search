@@ -16,3 +16,17 @@ spring:
     url: jdbc:mysql://${DB_ADDRESS}/${DB_NAME}?serverTimezone=Asia/Seoul&characterEncoding=UTF-8
     username: ${DB_USER}
     password: ${DB_PASSWORD}
+
+gemini:
+  base-url: https://generativelanguage.googleapis.com
+  api-key: ${GEMINI_API_KEY}
+  model: gemini-2.5-flash-lite
+  timeout: 30s
+
+pipeline:
+  review-summary:
+    enabled: true
+    run-on-startup: true
+    recent-review-limit: 50
+    per-book-review-limit: 50
+    cron: "0 30 2 * * *"
