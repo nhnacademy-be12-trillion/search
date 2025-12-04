@@ -30,3 +30,11 @@ pipeline:
     recent-review-limit: 50
     per-book-review-limit: 50
     cron: "0 30 2 * * *"
+
+  book-stats:
+    enabled: true
+    run-on-startup: true
+    page-size: 2000
+    ubq-chunk-size: 500
+    cron: "0 40 2 * * *"
+

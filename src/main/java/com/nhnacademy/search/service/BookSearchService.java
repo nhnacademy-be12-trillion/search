@@ -82,7 +82,13 @@ public class BookSearchService {
                 "metadata.reviewSummary^40"
         ));
 
-        root.put("query", Map.of("multi_match", multiMatch));
+        // null 방어
+        String q = req.query();
+        if (q == null || q.isBlank()) {
+            root.put("query", Map.of("match_all", Map.of()));
+        } else {
+            root.put("query", Map.of("multi_match", multiMatch));
+        }
 
         // sort
         List<Object> sort = buildSort(req.sort());
@@ -124,7 +130,6 @@ public class BookSearchService {
                 field = "metadata.price";
                 order = "desc";
             }
-            // 아직 미구현
             case POPULARITY -> {
                 field = "popularityScore";
                 order = "desc";
