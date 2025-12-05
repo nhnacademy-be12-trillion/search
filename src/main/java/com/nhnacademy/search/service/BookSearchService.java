@@ -48,11 +48,15 @@ public class BookSearchService {
                         "id",
                         "metadata.isbn",
                         "metadata.title",
+                        "metadata.subtitle",
                         "metadata.author",
                         "metadata.publisher",
                         "metadata.price",
                         "metadata.imageUrl",
-                        "metadata.editionPublishDate"
+                        "metadata.editionPublishDate",
+                        "metadata.tags",
+                        "ratingAvg",
+                        "reviewCount"
                 )
         );
         root.put("_source", source);
@@ -82,12 +86,27 @@ public class BookSearchService {
                 "metadata.reviewSummary^40"
         ));
 
-        // null 방어
+        // null 방어a
+        Map<String, Object> baseQuery;
         String q = req.query();
         if (q == null || q.isBlank()) {
-            root.put("query", Map.of("match_all", Map.of()));
+            baseQuery = Map.of("match_all", Map.of());
         } else {
-            root.put("query", Map.of("multi_match", multiMatch));
+            baseQuery = Map.of("multi_match", multiMatch);
+        }
+
+        // 100 건 이상 조회 조건
+        if (req.sort() == BookSortOption.RATING) {
+            root.put("query", Map.of(
+                    "bool", Map.of(
+                            "must", List.of(baseQuery),
+                            "filter", List.of(
+                                    Map.of("range", Map.of("ratingCount", Map.of("gte", 100)))
+                            )
+                    )
+            ));
+        } else {
+            root.put("query", baseQuery);
         }
 
         // sort
@@ -204,6 +223,7 @@ public class BookSearchService {
 
                     String isbn = asString(metadata.get("isbn"));
                     String title = asString(metadata.get("title"));
+                    String subtitle = asString(metadata.get("subtitle"));
                     String author = asString(metadata.get("author"));
                     String publisher = asString(metadata.get("publisher"));
 
@@ -211,6 +231,11 @@ public class BookSearchService {
                     Integer price = asInteger(metadata.get("price"));
                     String imageUrl = asString(metadata.get("imageUrl"));
                     String editionDate = asString(metadata.get("editionPublishDate"));
+
+                    List<String> tags = asStringList(metadata.get("tags"));
+
+                    Float ratingAvg = asFloat(source.get("ratingAvg"));
+                    Integer reviewCount = asInteger(source.get("reviewCount"));
 
                     // score 도 price 와 동일하게 null 허용
                     Float score = null;
@@ -220,8 +245,9 @@ public class BookSearchService {
                     }
 
                     return new BookSearchResult(
-                            id, isbn, title, author, publisher,
-                            price, imageUrl, editionDate, score
+                            id, isbn, title, subtitle, author, publisher,
+                            price, imageUrl, editionDate, tags, ratingAvg,
+                            reviewCount, score
                     );
                 })
                 .filter(Objects::nonNull)
@@ -246,6 +272,26 @@ public class BookSearchService {
                 return Integer.parseInt(s);
             } catch (NumberFormatException ignored) {
             }
+        }
+        return null;
+    }
+
+    private List<String> asStringList(Object value) {
+        if (value == null) return List.of();
+        if (value instanceof List<?> list) {
+            return list.stream()
+                    .filter(Objects::nonNull)
+                    .map(String::valueOf)
+                    .toList();
+        }
+        return List.of(String.valueOf(value)); // 단일 값 방어
+    }
+
+    private Float asFloat(Object value) {
+        if (value == null) return null;
+        if (value instanceof Number n) return n.floatValue();
+        if (value instanceof String s) {
+            try { return Float.parseFloat(s); } catch (NumberFormatException ignored) {}
         }
         return null;
     }

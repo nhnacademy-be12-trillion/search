@@ -21,20 +21,17 @@ GET http://127.0.0.1:10416/api/books/search?query=한강&sort=HIGH_PRICE&page=0&
 Accept: application/json
 
 ###
-### 2-4. 인기도 순 (popularityScore desc) - 미구현
-# TODO: 인기도 집계/인덱싱 구현 후 활성화
+### 2-4. 인기도 순 (popularityScore desc)
 GET http://127.0.0.1:10416/api/books/search?query=한강&sort=POPULARITY&page=0&size=10
 Accept: application/json
 
 ###
-### 2-5. 평점 순 (ratingCount >= 100 + ratingAvg desc) - 미구현
-# TODO: ratingAvg / ratingCount / ratingForSort 필드 인덱싱 후 사용
+### 2-5. 평점 순
 GET http://127.0.0.1:10416/api/books/search?query=한강&sort=RATING&page=0&size=10
 Accept: application/json
 
 ###
-### 2-6. 리뷰 많은 순 (reviewCount desc) - 미구현
-# TODO: reviewCount 필드 인덱싱 후 사용
+### 2-6. 리뷰 많은 순 (reviewCount desc)
 GET http://127.0.0.1:10416/api/books/search?query=한강&sort=REVIEW_COUNT&page=0&size=10
 Accept: application/json
 
