@@ -59,7 +59,7 @@ content-Type: application/json
 
 ###
 ### 0-1 Text Embedding 예제
-POST http://ollama.java21.net/api/embeddings
+POST http://ollama/api/embeddings
 Content-Type: application/json
 
 {
@@ -69,7 +69,7 @@ Content-Type: application/json
 
 ###
 ### 0-2. Reranker 예제
-POST http://reranker.java21.net/rerank
+POST http://reranker/rerank
 Content-Type: application/json
 
 {
