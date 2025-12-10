@@ -86,7 +86,7 @@ public class BookSearchService {
                 "metadata.reviewSummary^40"
         ));
 
-        // null 방어a
+        // null 방어
         Map<String, Object> baseQuery;
         String q = req.query();
         if (q == null || q.isBlank()) {
@@ -247,7 +247,7 @@ public class BookSearchService {
                     return new BookSearchResult(
                             id, isbn, title, subtitle, author, publisher,
                             price, imageUrl, editionDate, tags, ratingAvg,
-                            reviewCount, score
+                            reviewCount, score, null, null, null
                     );
                 })
                 .filter(Objects::nonNull)

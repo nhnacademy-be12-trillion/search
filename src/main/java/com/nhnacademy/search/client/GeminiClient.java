@@ -15,14 +15,21 @@ import java.util.List;
 import java.util.Map;
 
 @Component
-@RequiredArgsConstructor
 public class GeminiClient {
 
-    @Qualifier("geminiWebClient")
     private final WebClient geminiWebClient;
-
     private final GeminiProperties props;
     private final ObjectMapper objectMapper;
+
+    public GeminiClient(
+            @Qualifier("geminiWebClient") WebClient geminiWebClient,
+            GeminiProperties props,
+            ObjectMapper objectMapper
+    ) {
+        this.geminiWebClient = geminiWebClient;
+        this.props = props;
+        this.objectMapper = objectMapper;
+    }
 
     // 가장 단순한 텍스트 생성/요약 호출.
     // 프롬프트에 시스템 지시문까지 같이 넣는 방식

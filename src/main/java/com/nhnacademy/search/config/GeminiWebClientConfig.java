@@ -2,6 +2,7 @@ package com.nhnacademy.search.config;
 
 import io.netty.channel.ChannelOption;
 import lombok.RequiredArgsConstructor;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpHeaders;
@@ -11,8 +12,11 @@ import org.springframework.web.reactive.function.client.WebClient;
 import reactor.netty.http.client.HttpClient;
 
 @Configuration
+@EnableConfigurationProperties(GeminiProperties.class)
 @RequiredArgsConstructor
 public class GeminiWebClientConfig {
+
+    private final GeminiProperties pros;
 
     @Bean("geminiWebClient")
     public WebClient geminiWebClient(GeminiProperties props, WebClient.Builder builder) {

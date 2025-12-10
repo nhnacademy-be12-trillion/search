@@ -38,3 +38,21 @@ pipeline:
     ubq-chunk-size: 500
     cron: "0 40 2 * * *"
 
+ai:
+  ollama:
+    base-url: ${OLLAMA_BASE_URL}
+    embed-model: ${OLLAMA_EMBED_MODEL:bge-m3}
+    timeout: 10s
+
+  reranker:
+    base-url: ${RERANKER_BASE_URL}
+    timeout: 10s
+
+  search:
+    embedding-field: embeddingVector
+    script-source: "cosineSimilarity(params.qv, '{field}') + 1.0"
+    min-candidates: 50
+    max-candidates: 200
+    candidate-multiplier: 5
+    rerank-text-max-len: 1200
+

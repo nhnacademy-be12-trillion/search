@@ -37,8 +37,12 @@ Accept: application/json
 
 ###
 ### 3-1. 리뷰 요약 검색 (reviewSummary)
-
 GET http://127.0.0.1:10416/api/books/9791168150102/review-summary
+Accept: application/json
+
+###
+### 4-1. ai 검색 기본순
+GET http://127.0.0.1:10416/api/books/ai-search?query=JAVA SPRING 기본서 추천해줘&page=0&size=10
 Accept: application/json
 
 ###
@@ -51,5 +55,36 @@ content-Type: application/json
       "text": "2025 도서 명작을 추천해줘"
     }]
   }]
+}
+
+###
+### 0-1 Text Embedding 예제
+POST http://ollama.java21.net/api/embeddings
+Content-Type: application/json
+
+{
+  "model": "bge-m3",
+  "prompt": "java 스프링 Backend 과정 추천해줘"
+}
+
+###
+### 0-2. Reranker 예제
+POST http://reranker.java21.net/rerank
+Content-Type: application/json
+
+{
+  "query": "java Srping backend API 도서 추천 부탁해",
+  "texts": [
+    "Spring Boot로 REST API 서버를 만드는 방법을 설명한 튜토리얼입니다.",
+    "Spring Data JPA를 활용해 MySQL에서 데이터를 조회하고 저장하는 예제를 다룹니다.",
+    "Java 21에서 추가된 가상 스레드(virtual threads)를 이용해 동시성을 개선하는 방법을 소개합니다.",
+    "스프링 시큐리티(Spring Security)로 JWT 기반 인증과 권한 부여를 구현하는 방법을 설명합니다.",
+    "Spring Batch를 사용하여 대용량 배치 작업을 효율적으로 처리하는 방법을 정리했습니다.",
+    "JUnit 5와 Mockito를 사용해 서비스 레이어 단위 테스트를 작성하는 실습입니다.",
+    "스프링 부트 애플리케이션에서 캐싱을 적용하여 성능을 최적화하는 방법을 다룹니다.",
+    "Spring Cloud Config와 Eureka를 이용해 마이크로서비스 환경에서 설정과 서비스 디스커버리를 구성합니다.",
+    "Docker와 Kubernetes로 스프링 애플리케이션을 컨테이너화하고 배포하는 방법을 설명합니다.",
+    "Gradle 멀티 모듈 프로젝트로 스프링 부트 서비스를 구조화하는 모범 사례를 소개합니다."
+  ]
 }
 

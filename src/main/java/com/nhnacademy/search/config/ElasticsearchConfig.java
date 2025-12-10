@@ -2,6 +2,7 @@ package com.nhnacademy.search.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
 import org.springframework.http.HttpHeaders;
 import org.springframework.web.reactive.function.client.WebClient;
 
@@ -17,7 +18,8 @@ public class ElasticsearchConfig {
         this.properties = properties;
     }
 
-    @Bean
+    @Bean("elasticsearchWebClient")
+    @Primary
     public WebClient elasticsearchWebClient() {
         String baseUrl = properties.getScheme() + "://" +
                 properties.getHost() + ":" + properties.getPort();

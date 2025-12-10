@@ -15,5 +15,9 @@ public record BookSearchResult(
         List<String> tags,
         Float ratingAvg,
         Integer reviewCount,
-        Float score // ES _score
+        Float score, // ES _score
+
+        Integer relevancePercent,        // 0~100
+        String recommendationReason,     // 추천 이유(1~2문장)
+        Boolean recommended              // 추천 배지
 ) {}
