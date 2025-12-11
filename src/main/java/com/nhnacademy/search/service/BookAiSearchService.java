@@ -264,11 +264,23 @@ public class BookAiSearchService {
         if (resp == null || resp.isEmpty()) return List.of();
 
         List<RerankItem> items = new ArrayList<>(resp.size());
+        int bad = 0;
+
         for (Map<String, Object> m : resp) {
             int idx = ((Number) m.get("index")).intValue();
             float score = ((Number) m.get("score")).floatValue();
+
+            if (!Float.isFinite(score)) {
+                bad++;
+                score = 0f;
+            }
+
             items.add(new RerankItem(idx, score));
         }
+        if (bad > 0) {
+            log.warn("[AI][rerank] non-finite scores fixed: badCount={}/{}", bad, resp.size());
+        }
+
         items.sort(Comparator.comparing(RerankItem::score).reversed());
         return items;
     }
@@ -467,19 +479,30 @@ public class BookAiSearchService {
     }
 
     private void fillBaseRelevance(List<Candidate> list) {
-        float min = Float.MAX_VALUE, max = -Float.MAX_VALUE;
-        for (Candidate c : list) {
-            float v = (c.rerankScore == null) ? 0f : c.rerankScore;
-            min = Math.min(min, v);
-            max = Math.max(max, v);
+        int n = list.size();
+        if (n == 0) return;
+
+        if (n == 1) {
+            list.get(0).llmRelevance = 100;
+            list.get(0).llmReason = null;
+            return;
         }
-        for (Candidate c : list) {
-            float v = (c.rerankScore == null) ? 0f : c.rerankScore;
-            int pct = (max <= min) ? 50 : Math.round((v - min) * 100f / (max - min));
-            c.llmRelevance = clamp(pct, 0, 100);
-            c.llmReason = null;
+
+        for (int i = 0; i < n; i++) {
+            // 1등=100, 꼴등=0에 가깝게
+            float ratio = 1f - (i / (float) (n - 1)); // 1 -> 0
+            int pct = Math.round(100f * ratio);       // 선형
+            list.get(i).llmRelevance = clamp(pct, 0, 100);
+            list.get(i).llmReason = null;
         }
+
+        log.debug("[AI] base relevance(rank) computed: n={}, top={}, mid={}, last={}",
+                n,
+                list.get(0).llmRelevance,
+                list.get(n / 2).llmRelevance,
+                list.get(n - 1).llmRelevance);
     }
+
 
     private void markRecommended(List<Candidate> list) {
         int topN = Math.min(3, list.size());

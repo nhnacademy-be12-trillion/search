@@ -46,6 +46,7 @@ GET http://127.0.0.1:10416/api/books/ai-search?query=JAVA SPRING 기본서 추�
 Accept: application/json
 
 ###
+### 0-0. LLM 리뷰 요약 예제
 POST http://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent
 content-Type: application/json
 
