@@ -1,58 +1,16 @@
-server:
-  port: 10416
-
-elasticsearch:
-  scheme: http
-  host: ${ES_HOST}
-  port: 9200
-  username: elastic
-  password: ${ES_PASSWORD}
-  index:
-    book: trillion_books
-
-spring:
-  datasource:
-    driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://s4.java21.net:13306/project_be12_team1?serverTimezone=Asia/Seoul&characterEncoding=UTF-8
-    username: project_be12_team1
-    password: ${DB_PASSWORD}
-
-gemini:
-  base-url: https://generativelanguage.googleapis.com
-  api-key: ${GEMINI_SEARCH_KEY}
-  model: gemini-2.5-flash-lite
-  timeout: 30s
-
-pipeline:
-  review-summary:
-    enabled: true
-    run-on-startup: true
-    recent-review-limit: 50
-    per-book-review-limit: 50
-    cron: "0 30 2 * * *"
-
-  book-stats:
-    enabled: true
-    run-on-startup: true
-    page-size: 2000
-    ubq-chunk-size: 500
-    cron: "0 40 2 * * *"
-
-ai:
-  ollama:
-    base-url: ${OLLAMA_BASE_URL}
-    embed-model: bge-m3
-    timeout: 10s
-
-  reranker:
-    base-url: ${RERANKER_BASE_URL}
-    timeout: 10s
-
-  search:
-    embedding-field: embeddingVector
-    script-source: "cosineSimilarity(params.qv, '{field}') + 1.0"
-    min-candidates: 50
-    max-candidates: 200
-    candidate-multiplier: 5
-    rerank-text-max-len: 1200
-
+#spring:
+#  application:
+#    name: book-service
+#  config:
+#    import: configserver:${CONFIG_SERVER_URI:http://localhost:10418}
+#  cloud:
+#    config:
+#      username: be12-team1
+#      password: nhnacademy123!
+#
+#eureka:
+#  client:
+#    register-with-eureka: true
+#    fetch-registry: true
+#    service-url:
+#      defaultZone: ${EUREKA_URL}
