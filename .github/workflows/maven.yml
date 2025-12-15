@@ -2,7 +2,7 @@ name: search-service package
 
 on:
   push:
-    branches: [ "infra" ]
+    branches: [ "dev" ]
   workflow_dispatch:
 
 env:
