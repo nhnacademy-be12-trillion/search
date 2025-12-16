@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
+@RequestMapping("/search")
 @RequiredArgsConstructor
 @Tag(name = "Books", description = "도서 검색 API")
 public class BookSearchController {
@@ -26,7 +27,7 @@ public class BookSearchController {
             summary = "도서 검색",
             description = "query를 기반으로 검색하고 sort/page/size로 정렬 및 페이징합니다."
     )
-    @GetMapping("/search")
+    @GetMapping
     public BookSearchResponse search(
             @Parameter(description = "검색어", example = "한강", required = true)
             @RequestParam String query,
@@ -45,7 +46,7 @@ public class BookSearchController {
     }
 
     @Operation(summary = "AI 도서 검색", description = "Vector 검색 + Rerank + Gemini 검증/추천이유까지 수행합니다.")
-    @GetMapping("/ai-search")
+    @GetMapping("/ai")
     public BookSearchResponse aiSearch(
             @Parameter(description = "검색어", example = "한강", required = true)
             @RequestParam String query,
