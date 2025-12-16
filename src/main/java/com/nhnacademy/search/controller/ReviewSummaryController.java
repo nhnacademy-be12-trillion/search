@@ -9,7 +9,6 @@ import io.swagger.v3.oas.annotations.Parameter;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/books")
 @RequiredArgsConstructor
 @Tag(name = "Reviews", description = "리뷰 요약 API")
 public class ReviewSummaryController {
