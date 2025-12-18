@@ -76,14 +76,14 @@ jobs:
             echo "Search-service 롤링 업데이트 시작"
 
             echo "최신 이미지 Pull 및 Peer 1 재시작..."
-            docker-compose rm -f ${SERVICE_NAME1}
-            docker-compose pull ${SERVICE_NAME1}
-            docker-compose up -d --no-deps ${SERVICE_NAME1}
+            docker compose rm -f ${SERVICE_NAME1}
+            docker compose pull ${SERVICE_NAME1}
+            docker compose up -d --no-deps ${SERVICE_NAME1}
             
             echo "최신 이미지 Pull 및 Peer 2 재시작..."
-            docker-compose rm -f ${SERVICE_NAME2}
-            docker-compose pull ${SERVICE_NAME2}
-            docker-compose up -d --no-deps ${SERVICE_NAME2}
+            docker compose rm -f ${SERVICE_NAME2}
+            docker compose pull ${SERVICE_NAME2}
+            docker compose up -d --no-deps ${SERVICE_NAME2}
             
             echo "Search-Service 롤링 업데이트 완료!"
 
