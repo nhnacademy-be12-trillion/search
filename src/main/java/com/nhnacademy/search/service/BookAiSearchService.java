@@ -239,16 +239,42 @@ public class BookAiSearchService {
     }
 
     private Map<String, Object> buildFilterQuery(BookSortOption sort) {
-        if (sort == BookSortOption.RATING) {
-            return Map.of(
-                    "bool", Map.of(
-                            "must", List.of(Map.of("match_all", Map.of())),
-                            "filter", List.of(Map.of("range", Map.of("ratingCount", Map.of("gte", 100))))
-                    )
-            );
+        // 필터 리스트 준비
+        List<Map<String, Object>> filters = new ArrayList<>();
+
+        // 항상 embeddingVector 존재하는 문서만 대상으로
+        String field = aiProps.getSearch().getEmbeddingField();
+        if (field == null || field.isBlank()) {
+            field = "embeddingVector";
         }
-        return Map.of("match_all", Map.of());
+
+        filters.add(Map.of(
+                "exists", Map.of("field", field)
+        ));
+
+        // 정렬 옵션별 추가 필터 (RATING 정렬 - 최소 100건 이상)
+        if (sort == BookSortOption.RATING) {
+            filters.add(Map.of(
+                    "range", Map.of(
+                            "ratingCount", Map.of("gte", 100)
+                    )
+            ));
+        }
+
+        // 필터가 하나도 없으면 match_all 리턴 (이론상 지금 구조에서는 항상 filters 에 1개 이상 들어감)
+        if (filters.isEmpty()) {
+            return Map.of("match_all", Map.of());
+        }
+
+        // bool + filter 로 감싸서 script_score 의 inner query 로 사용
+        return Map.of(
+                "bool", Map.of(
+                        "must", List.of(Map.of("match_all", Map.of())),
+                        "filter", filters
+                )
+        );
     }
+
 
     // ---------- Rerank ----------
     private List<RerankItem> rerank(String query, List<String> texts) {

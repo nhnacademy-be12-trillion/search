@@ -8,7 +8,7 @@ elasticsearch:
   username: elastic
   password: ${ES_PASSWORD}
   index:
-    book: trillion_books
+    book: trillion_books_dev
 
 spring:
   datasource:
@@ -25,23 +25,27 @@ eureka:
     enabled: false
     #    Infra Setting
 
+# gemini-2.5-flash-live / gemini-2.5-flash-lite
 gemini:
   base-url: https://generativelanguage.googleapis.com
   api-key: ${GEMINI_SEARCH_KEY}
-  model: gemini-2.5-flash-lite
+  model: gemini-2.5-flash
   timeout: 30s
 
 pipeline:
+  full-reindex:
+    enabled: false
+
   review-summary:
-    enabled: true
-    run-on-startup: true
+    enabled: false            # 풀 리인덱스 동안은 false
+    run-on-startup: false
     recent-review-limit: 50
     per-book-review-limit: 50
     cron: "0 30 2 * * *"
 
   book-stats:
-    enabled: true
-    run-on-startup: true
+    enabled: false             # 풀 리인덱스 동안은 false
+    run-on-startup: false
     page-size: 2000
     ubq-chunk-size: 500
     cron: "0 40 2 * * *"
