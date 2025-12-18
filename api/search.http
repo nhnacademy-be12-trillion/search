@@ -1,13 +1,13 @@
 ### 1. 기본 검색 (BM25 + 필드 가중치, 정확도 순)
 # - sort 파라미터 생략 시 RELEVANCE(정확도순) 기본
-GET http://127.0.0.1:10416/api/books/search?query=한강&page=0&size=10
+GET http://127.0.0.1:10416/books/search?query=한강&page=0&size=10
 Accept: application/json
 
 ###
 ### 2. 정렬 옵션별 검색 (NEW / LOW_PRICE / HIGH_PRICE / POPULARITY / RATING / REVIEW_COUNT)
 
 ### 2-1. 신상품 순 (발행일 기준 내림차순)
-GET http://127.0.0.1:10416/api/books/search?query=한강&sort=NEW&page=0&size=10
+GET http://127.0.0.1:10416/books/search?query=진격의거인&sort=NEW&page=0&size=10
 Accept: application/json
 
 ###
@@ -42,7 +42,7 @@ Accept: application/json
 
 ###
 ### 4-1. ai 검색 기본순
-GET http://127.0.0.1:10416/api/books/ai-search?query=JAVA SPRING 기본서 추천해줘&page=0&size=10
+GET http://127.0.0.1:10416/books/ai-search?query=주술&page=0&size=10
 Accept: application/json
 
 ###
@@ -60,7 +60,7 @@ content-Type: application/json
 
 ###
 ### 0-1 Text Embedding 예제
-POST http://ollama/api/embeddings
+POST http://ollama.java21.net/api/embeddings
 Content-Type: application/json
 
 {

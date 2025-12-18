@@ -3,6 +3,7 @@ package com.nhnacademy.search.es;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
@@ -10,6 +11,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 
 import java.util.Map;
 
+@Slf4j
 @Component
 public class EsReviewSummaryUpdater {
     private final WebClient esWebClient;
@@ -25,7 +27,7 @@ public class EsReviewSummaryUpdater {
 
     public void updateReviewSummaryByIsbn(String indexName, Map<String, String> isbnToSummary) {
         if (isbnToSummary == null || isbnToSummary.isEmpty()) {
-            System.out.println("[EsReviewSummaryUpdater] skip: empty isbnToSummary");
+            log.info("[EsReviewSummaryUpdater] skip: empty isbnToSummary");
             return;
         }
 
@@ -58,20 +60,27 @@ public class EsReviewSummaryUpdater {
     }
 
     private void logUbq(String indexName, int keys, String resp) {
+        if (resp == null || resp.isBlank()) {
+            log.warn("[EsReviewSummaryUpdater] UBQ response empty. index={} keys={}", indexName, keys);
+            return;
+        }
+
         try {
             JsonNode root = objectMapper.readTree(resp);
-            System.out.printf(
-                    "[EsReviewSummaryUpdater] UBQ index=%s keys=%d took=%dms total=%d updated=%d noops=%d conflicts=%d failures=%d%n",
-                    indexName, keys,
-                    root.path("took").asLong(-1),
-                    root.path("total").asLong(-1),
-                    root.path("updated").asLong(-1),
-                    root.path("noops").asLong(-1),
-                    root.path("version_conflicts").asLong(-1),
-                    root.path("failures").isArray() ? root.path("failures").size() : 0
-            );
+
+            long took = root.path("took").asLong(-1);
+            long total = root.path("total").asLong(-1);
+            long updated = root.path("updated").asLong(-1);
+            long noops = root.path("noops").asLong(-1);
+            long conflicts = root.path("version_conflicts").asLong(-1);
+
+            JsonNode failures = root.path("failures");
+            int failureCount = (failures != null && failures.isArray()) ? failures.size() : 0;
+
+            log.info("[EsReviewSummaryUpdater] UBQ index={} keys={} took={}ms total={} updated={} noops={} conflicts={} failures={}",
+                    indexName, keys, took, total, updated, noops, conflicts, failureCount);
         } catch (Exception e) {
-            System.out.printf("[EsReviewSummaryUpdater] parse fail index=%s err=%s%n", indexName, e.getMessage());
+            log.error("[EsReviewSummaryUpdater] parse fail index={} keys={}", indexName, keys, e);
         }
     }
 }

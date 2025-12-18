@@ -6,12 +6,14 @@ import com.nhnacademy.search.client.GeminiClient;
 import com.nhnacademy.search.repository.BookIsbnReadRepository;
 import com.nhnacademy.search.repository.ReviewReadRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class ReviewSummaryPipelineService {
@@ -26,7 +28,7 @@ public class ReviewSummaryPipelineService {
         List<Long> bookIds = reviewRepo.findRecentReviewBookIds(recentReviewLimit);
 
         if (bookIds.isEmpty()) {
-            System.out.println("[ReviewSummaryPipeline] 최근 리뷰가 없어 종료");
+            log.info("[ReviewSummaryPipeline] 최근 리뷰가 없어 종료");
             return;
         }
 
@@ -49,13 +51,13 @@ public class ReviewSummaryPipelineService {
         }
 
         if (isbnToSummary.isEmpty()) {
-            System.out.println("[ReviewSummaryPipeline] 업데이트할 요약이 없어 종료");
+            log.info("[ReviewSummaryPipeline] 업데이트할 요약이 없어 종료");
             return;
         }
 
         String indexName = esProps.getIndex().getBook();
         esUpdater.updateReviewSummaryByIsbn(indexName, isbnToSummary);
-        System.out.printf("[ReviewSummaryPipeline] done. books=%d updatedIsbn=%d%n", bookIds.size(), isbnToSummary.size());
+        log.info("[ReviewSummaryPipeline] done. books={} updatedIsbn={}", bookIds.size(), isbnToSummary.size());
     }
 
     private String buildPrompt(List<String> reviews) {

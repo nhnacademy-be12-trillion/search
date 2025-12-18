@@ -2,7 +2,7 @@ package com.nhnacademy.search.es;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
@@ -11,6 +11,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 import java.util.List;
 import java.util.Map;
 
+@Slf4j
 @Component
 public class EsTagUpdater {
 
@@ -62,7 +63,7 @@ public class EsTagUpdater {
 
     private void logUpdateByQueryResult(String indexName, int isbnKeyCount, String resp) {
         if (resp == null || resp.isBlank()) {
-            System.out.printf("[EsTagUpdater] _update_by_query response is empty. index=%s isbnKeys=%d%n",
+            log.warn("[EsTagUpdater] _update_by_query response is empty. index={} isbnKeys={}",
                     indexName, isbnKeyCount);
             return;
         }
@@ -79,10 +80,8 @@ public class EsTagUpdater {
             JsonNode failures = root.path("failures");
             int failureCount = (failures != null && failures.isArray()) ? failures.size() : 0;
 
-            System.out.printf(
-                    "[EsTagUpdater] UBQ index=%s isbnKeys=%d took=%dms total=%d updated=%d noops=%d conflicts=%d failures=%d%n",
-                    indexName, isbnKeyCount, took, total, updated, noops, versionConflicts, failureCount
-            );
+            log.info("[EsTagUpdater] UBQ index={} isbnKeys={} took={}ms total={} updated={} noops={} conflicts={} failures={}",
+                    indexName, isbnKeyCount, took, total, updated, noops, versionConflicts, failureCount);
 
             if (failureCount > 0) {
                 int show = Math.min(3, failureCount);
@@ -92,14 +91,14 @@ public class EsTagUpdater {
                     String reason = f.path("cause").path("reason").asText("");
                     String index = f.path("index").asText(indexName);
 
-                    System.out.printf("[EsTagUpdater] UBQ failure[%d] index=%s type=%s reason=%s%n",
+                    log.warn("[EsTagUpdater] UBQ failure[{}] index={} type={} reason={}",
                             i, index, causeType, reason);
                 }
             }
         } catch (Exception e) {
             String snippet = resp.length() > 500 ? resp.substring(0, 500) + "..." : resp;
-            System.out.printf("[EsTagUpdater] Failed to parse UBQ response. index=%s isbnKeys=%d err=%s resp=%s%n",
-                    indexName, isbnKeyCount, e.getMessage(), snippet);
+            log.error("[EsTagUpdater] Failed to parse UBQ response. index={} isbnKeys={} respSnippet={}",
+                    indexName, isbnKeyCount, snippet, e);
         }
     }
 }
