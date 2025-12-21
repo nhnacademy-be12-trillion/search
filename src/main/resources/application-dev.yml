@@ -8,7 +8,7 @@ elasticsearch:
   username: elastic
   password: ${ES_PASSWORD}
   index:
-    book: trillion_books_dev
+    book: trillion_books_dev_v2
 
 spring:
   datasource:
