@@ -1,6 +1,6 @@
 ### 1. 기본 검색 (BM25 + 필드 가중치, 정확도 순)
 # - sort 파라미터 생략 시 RELEVANCE(정확도순) 기본
-GET http://127.0.0.1:10416/books/search?query=한강&page=0&size=10
+GET http://127.0.0.1:10416/books/search?query=주술&page=0&size=10
 Accept: application/json
 
 ###
