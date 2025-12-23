@@ -3,6 +3,7 @@ package com.nhnacademy.search.schedule;
 import com.nhnacademy.search.config.BookStatsSyncProperties;
 import com.nhnacademy.search.service.BookStatsSyncService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -10,6 +11,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class BookStatsScheduler {
@@ -33,13 +35,13 @@ public class BookStatsScheduler {
 
     private void runSafely(String reason) {
         if (!running.compareAndSet(false, true)) {
-            System.out.println("[BookStatsScheduler] skip: already running. reason=" + reason);
+            log.info("[BookStatsScheduler] skip: already running. reason={}", reason);
             return;
         }
         try {
-            System.out.println("[BookStatsScheduler] start reason=" + reason);
+            log.info("[BookStatsScheduler] start reason={}", reason);
             service.runFullSync();
-            System.out.println("[BookStatsScheduler] done reason=" + reason);
+            log.info("[BookStatsScheduler] done reason={}", reason);
         } finally {
             running.set(false);
         }

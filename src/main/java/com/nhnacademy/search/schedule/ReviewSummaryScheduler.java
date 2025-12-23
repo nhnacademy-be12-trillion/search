@@ -3,6 +3,7 @@ package com.nhnacademy.search.schedule;
 import com.nhnacademy.search.config.ReviewSummaryPipelineProperties;
 import com.nhnacademy.search.service.ReviewSummaryPipelineService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -10,6 +11,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class ReviewSummaryScheduler {
@@ -35,7 +37,7 @@ public class ReviewSummaryScheduler {
 
     private void runSafely(String reason) {
         if (!running.compareAndSet(false, true)) {
-            System.out.println("[ReviewSummaryScheduler] skip: already running. reason=" + reason);
+            log.info("[ReviewSummaryScheduler] skip: already running. reason={}", reason);
             return;
         }
         try {

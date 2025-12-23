@@ -10,6 +10,7 @@ public record BookSearchResult(
         String author,
         String publisher,
         Integer price,
+        Integer salePrice,
         String imageUrl,
         String editionPublishDate,
         List<String> tags,

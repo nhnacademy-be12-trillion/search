@@ -151,7 +151,7 @@ public class BookAiSearchService {
         BookSearchResult r = c.result;
         return new BookSearchResult(
                 r.id(), r.isbn(), r.title(), r.subtitle(), r.author(), r.publisher(),
-                r.price(), r.imageUrl(), r.editionPublishDate(), r.tags(),
+                r.price(), r.salePrice(), r.imageUrl(), r.editionPublishDate(), r.tags(),
                 r.ratingAvg(), r.reviewCount(), r.score(),
 
                 c.llmRelevance,
@@ -223,6 +223,7 @@ public class BookAiSearchService {
                         "metadata.author",
                         "metadata.publisher",
                         "metadata.price",
+                        "metadata.salePrice",
                         "metadata.imageUrl",
                         "metadata.editionPublishDate",
                         "metadata.tags",
@@ -359,6 +360,7 @@ public class BookAiSearchService {
             String publisher = asString(metadata.get("publisher"));
 
             Integer price = asInteger(metadata.get("price"));
+            Integer salePrice = asInteger(metadata.get("salePrice"));
             String imageUrl = asString(metadata.get("imageUrl"));
             String editionDate = asString(metadata.get("editionPublishDate"));
             List<String> tags = asStringList(metadata.get("tags"));
@@ -377,7 +379,7 @@ public class BookAiSearchService {
             // BookSearchResult 필드가 늘어났으니 마지막 3개를 추가
             BookSearchResult result = new BookSearchResult(
                     id, isbn, title, subtitle, author, publisher,
-                    price, imageUrl, editionDate, tags, ratingAvg,
+                    price, salePrice, imageUrl, editionDate, tags, ratingAvg,
                     reviewCount, esScore,
                     null, null, false
             );
@@ -388,6 +390,7 @@ public class BookAiSearchService {
             c.editionEpochMillis = parseDateToEpochMillis(editionDate);
 
             c.price = price;
+            c.salePrice = salePrice;
             c.ratingAvg = ratingAvg;
             c.reviewCount = reviewCount;
             c.popularityScore = popularityScore;
@@ -711,6 +714,7 @@ public class BookAiSearchService {
 
         Long editionEpochMillis;
         Integer price;
+        Integer salePrice;
         Float ratingAvg;
         Integer reviewCount;
         Double popularityScore;

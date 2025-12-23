@@ -5,10 +5,12 @@ import com.nhnacademy.search.config.ElasticsearchProperties;
 import com.nhnacademy.search.es.EsBookStatsUpdater;
 import com.nhnacademy.search.repository.BookStatsReadRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class BookStatsSyncService {
@@ -59,10 +61,10 @@ public class BookStatsSyncService {
                 updatedIsbn += isbnToStats.size();
             }
 
-            System.out.printf("[BookStatsSync] progress lastBookId=%d pageBooks=%d totalBooks=%d updatedIsbn=%d%n",
+            log.info("[BookStatsSync] progress lastBookId={} pageBooks={} totalBooks={} updatedIsbn={}",
                     lastBookId, page.size(), totalBooks, updatedIsbn);
         }
 
-        System.out.printf("[BookStatsSync] DONE totalBooks=%d updatedIsbn=%d%n", totalBooks, updatedIsbn);
+        log.info("[BookStatsSync] DONE totalBooks={} updatedIsbn={}", totalBooks, updatedIsbn);
     }
 }

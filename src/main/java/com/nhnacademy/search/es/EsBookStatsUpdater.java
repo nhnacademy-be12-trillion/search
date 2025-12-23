@@ -2,6 +2,7 @@ package com.nhnacademy.search.es;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
@@ -9,6 +10,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 
 import java.util.*;
 
+@Slf4j
 @Component
 public class EsBookStatsUpdater {
 
@@ -25,7 +27,7 @@ public class EsBookStatsUpdater {
 
     public void updateBookStatsByIsbn(String indexName, Map<String, BookStats> isbnToStats, int chunkSize) {
         if (isbnToStats == null || isbnToStats.isEmpty()) {
-            System.out.println("[EsBookStatsUpdater] skip: empty isbnToStats");
+            log.info("[EsBookStatsUpdater] skip: empty isbnToStats");
             return;
         }
 
@@ -87,9 +89,10 @@ public class EsBookStatsUpdater {
     private void logUbq(String indexName, int keys, String resp) {
         try {
             JsonNode root = objectMapper.readTree(resp);
-            System.out.printf(
-                    "[EsBookStatsUpdater] UBQ index=%s keys=%d took=%dms total=%d updated=%d noops=%d conflicts=%d failures=%d%n",
-                    indexName, keys,
+            log.info(
+                    "[EsBookStatsUpdater] UBQ index={} keys={} took={}ms total={} updated={} noops={} conflicts={} failures={}",
+                    indexName,
+                    keys,
                     root.path("took").asLong(-1),
                     root.path("total").asLong(-1),
                     root.path("updated").asLong(-1),
@@ -98,7 +101,6 @@ public class EsBookStatsUpdater {
                     root.path("failures").isArray() ? root.path("failures").size() : 0
             );
         } catch (Exception e) {
-            System.out.printf("[EsBookStatsUpdater] parse fail index=%s err=%s%n", indexName, e.getMessage());
-        }
+            log.warn("[EsBookStatsUpdater] parse fail index={} err={}", indexName, e.getMessage(), e);        }
     }
 }

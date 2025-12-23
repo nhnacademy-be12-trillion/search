@@ -229,6 +229,7 @@ public class BookSearchService {
 
                     // 가격이 없는 책에 대하여 null 허용
                     Integer price = asInteger(metadata.get("price"));
+                    Integer salePrice = asInteger(metadata.get("salePrice"));
                     String imageUrl = asString(metadata.get("imageUrl"));
                     String editionDate = asString(metadata.get("editionPublishDate"));
 
@@ -246,7 +247,7 @@ public class BookSearchService {
 
                     return new BookSearchResult(
                             id, isbn, title, subtitle, author, publisher,
-                            price, imageUrl, editionDate, tags, ratingAvg,
+                            price, salePrice, imageUrl, editionDate, tags, ratingAvg,
                             reviewCount, score, null, null, null
                     );
                 })
