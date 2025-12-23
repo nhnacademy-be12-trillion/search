@@ -55,7 +55,7 @@ public class EsBookStatsUpdater {
         }
 
         Map<String, Object> body = Map.of(
-                "query", Map.of("terms", Map.of("metadata.isbn.keyword", isbnToStats.keySet())),
+                "query", Map.of("terms", Map.of("metadata.isbn", isbnToStats.keySet())),
                 "script", Map.of(
                         "lang", "painless",
                         "source", """
