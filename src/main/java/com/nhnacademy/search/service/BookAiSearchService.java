@@ -460,22 +460,17 @@ public class BookAiSearchService {
             return orderedByReranker;
         }
 
-        // 2) 게이트: base 관련도 30% 이상만 LLM 대상으로 + topK 제한
-        final int gateMin = 30;
+        // 2) 게이트: base 관련도 50% 이상만 LLM 대상으로 + topK 제한
+        final int gateMin = 40;
         final int topK = Math.min(30, orderedByReranker.size());
 
-        // 앞에서부터가 아니라, base relevance 높은 것들 위주로 topK 선정
-        List<Candidate> pool = new ArrayList<>();
-        for (Candidate c : orderedByReranker) {
-            if (c.llmRelevance != null && c.llmRelevance >= gateMin) pool.add(c);
+        List<Candidate> llmTargets = new ArrayList<>();
+        for (int i = 0; i < orderedByReranker.size() && llmTargets.size() < topK; i++) {
+            Candidate c = orderedByReranker.get(i);
+            if (c.llmRelevance != null && c.llmRelevance >= gateMin) {
+                llmTargets.add(c);
+            }
         }
-        pool.sort(Comparator
-                .comparing((Candidate c) -> c.llmRelevance, Comparator.nullsLast(Comparator.reverseOrder()))
-                .thenComparing((Candidate c) -> c.rerankScore, Comparator.nullsLast(Comparator.reverseOrder()))
-                .thenComparing((Candidate c) -> c.esScore, Comparator.nullsLast(Comparator.reverseOrder()))
-        );
-
-        List<Candidate> llmTargets = pool.subList(0, Math.min(topK, pool.size()));
 
         if (llmTargets.isEmpty()) {
             markRecommended(orderedByReranker);
@@ -517,7 +512,7 @@ public class BookAiSearchService {
                 if (targetIds.contains(c.result.id())) {
                     out.add(llmTargets.get(t++));
                 } else {
-                    // gateMin 미만은 추천이유 비움(안 건드린 느낌)
+                    // 50% 미만은 추천이유 비움(안 건드린 느낌)
                     c.llmReason = null;
                     out.add(c);
                 }
@@ -545,42 +540,16 @@ public class BookAiSearchService {
             return;
         }
 
-        // rerankScore(min-max)로 0~100 생성 (점수 분포 반영)
-        float min = Float.POSITIVE_INFINITY;
-        float max = Float.NEGATIVE_INFINITY;
-
-        for (Candidate c : list) {
-            float s = (c.rerankScore == null) ? 0f : c.rerankScore;
-            if (!Float.isFinite(s)) s = 0f;
-            min = Math.min(min, s);
-            max = Math.max(max, s);
+        for (int i = 0; i < n; i++) {
+            // 1등=100, 꼴등=0에 가깝게
+            float ratio = 1f - (i / (float) (n - 1)); // 1 -> 0
+            int pct = Math.round(100f * ratio);       // 선형
+            list.get(i).llmRelevance = clamp(pct, 0, 100);
+            list.get(i).llmReason = null;
         }
 
-        // 점수 차이가 거의 없으면(전부 비슷) 기존 랭크 기반으로 fallback
-        if (max - min < 1e-6f) {
-            for (int i = 0; i < n; i++) {
-                float ratio = 1f - (i / (float) (n - 1)); // 1 -> 0
-                int pct = Math.round(100f * ratio);
-                list.get(i).llmRelevance = clamp(pct, 0, 100);
-                list.get(i).llmReason = null;
-            }
-            log.debug("[AI] base relevance(fallback-rank): n={}, min={}, max={}", n, min, max);
-            return;
-        }
-
-        for (Candidate c : list) {
-            float s = (c.rerankScore == null) ? 0f : c.rerankScore;
-            if (!Float.isFinite(s)) s = 0f;
-
-            float norm = (s - min) / (max - min); // 0~1
-            int pct = Math.round(norm * 100f);
-
-            c.llmRelevance = clamp(pct, 0, 100);
-            c.llmReason = null;
-        }
-
-        log.debug("[AI] base relevance(score) computed: n={}, min={}, max={}, top={}, mid={}, last={}",
-                n, min, max,
+        log.debug("[AI] base relevance(rank) computed: n={}, top={}, mid={}, last={}",
+                n,
                 list.get(0).llmRelevance,
                 list.get(n / 2).llmRelevance,
                 list.get(n - 1).llmRelevance);
