@@ -490,19 +490,29 @@ public class BookAiSearchService {
             // 3) 결과 반영 (LLM 대상만)
             for (Candidate c : llmTargets) {
                 LlmEval e = map.get(c.result.id());
-                if (e == null) continue;
+                if (e == null) {
+                    // 누락이면 위로 못 치고 올라오게 패널티
+                    c.geminiEvaluated = false;
+                    c.llmRelevance = Math.min(c.llmRelevance == null ? 0 : c.llmRelevance, gateMin - 1);
+                    c.llmReason = null;
+                    continue;
+                }
+
+                c.geminiEvaluated = true;
                 c.llmRelevance = clamp(e.relevance(), 0, 100);
                 c.llmReason = truncate(nvl(e.reason()), 220);
             }
 
             // 4) LLM이 검증한 구간만 재정렬
             llmTargets.sort(Comparator
-                    .comparing((Candidate c) -> c.llmRelevance, Comparator.nullsLast(Comparator.reverseOrder()))
+                    .comparing((Candidate c) -> Boolean.TRUE.equals(c.geminiEvaluated)).reversed()
+                    .thenComparing((Candidate c) -> c.llmRelevance, Comparator.nullsLast(Comparator.reverseOrder()))
                     .thenComparing((Candidate c) -> c.rerankScore, Comparator.nullsLast(Comparator.reverseOrder()))
                     .thenComparing((Candidate c) -> c.esScore, Comparator.nullsLast(Comparator.reverseOrder()))
             );
 
             // 5) 전체 리스트에 “타겟만” 교체 적용
+            // (게이트 통과 타겟만 교체 대상으로 삼음)
             Set<String> targetIds = new HashSet<>();
             for (Candidate c : llmTargets) targetIds.add(c.result.id());
 
@@ -748,6 +758,9 @@ public class BookAiSearchService {
         Integer llmRelevance; // 0~100
         String llmReason;
         Boolean recommended;
+
+        // Gemini 평가 여부(누락 패널티/정렬에 사용)
+        Boolean geminiEvaluated = false;
 
         Candidate(BookSearchResult result) {
             this.result = result;
