@@ -461,8 +461,8 @@ public class BookAiSearchService {
         }
 
         // 2) 게이트: base 관련도 50% 이상만 LLM 대상으로 + topK 제한
-        final int gateMin = 50;
-        final int topK = Math.min(15, orderedByReranker.size());
+        final int gateMin = 40;
+        final int topK = Math.min(30, orderedByReranker.size());
 
         List<Candidate> llmTargets = new ArrayList<>();
         for (int i = 0; i < orderedByReranker.size() && llmTargets.size() < topK; i++) {
