@@ -460,8 +460,8 @@ public class BookAiSearchService {
             return orderedByReranker;
         }
 
-        // 2) 게이트: base 관련도 40% 이상만 LLM 대상으로 + topK 제한
-        final int gateMin = 40;
+        // 2) 게이트: base 관련도 30% 이상만 LLM 대상으로 + topK 제한
+        final int gateMin = 30;
         final int topK = Math.min(30, orderedByReranker.size());
 
         // 앞에서부터가 아니라, base relevance 높은 것들 위주로 topK 선정
