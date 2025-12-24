@@ -35,6 +35,9 @@ public class BookAiSearchService {
     private final GeminiClient geminiClient;
     private final ObjectMapper objectMapper;
 
+    // AI 검색 캐시 (고정 TTL + 만료 임박 시 비동기 refresh)
+    private final AiSearchCacheService aiCache;
+
     // AI 실패 시 기존 BM25 검색으로 폴백(운영 안정성 높아짐)
     private final BookSearchService legacySearchService;
 
@@ -46,6 +49,7 @@ public class BookAiSearchService {
             @Qualifier("rerankerWebClient") WebClient rerankerWebClient,
             GeminiClient geminiClient,
             ObjectMapper objectMapper,
+            AiSearchCacheService aiCache,
             BookSearchService legacySearchService
     ) {
         this.elasticsearchWebClient = elasticsearchWebClient;
@@ -55,93 +59,113 @@ public class BookAiSearchService {
         this.rerankerWebClient = rerankerWebClient;
         this.geminiClient = geminiClient;
         this.objectMapper = objectMapper;
+        this.aiCache = aiCache;
         this.legacySearchService = legacySearchService;
     }
 
     public BookSearchResponse search(BookSearchRequest request) {
+        // page/size 정규화 (캐시 키 일관성)
         final int page = Math.max(request.page(), 0);
         final int size = normalizeSize(request.size());
 
+        // 캐시/폴백 모두 동일한 normalized request 사용
+        BookSearchRequest normalized = new BookSearchRequest(
+                request.query(),
+                request.sort(),
+                page,
+                size
+        );
+
         try {
-            final String query = (request.query() == null) ? "" : request.query().trim();
-
-            // 1) query -> embedding
-            List<Float> qv = embed(query);
-
-            // 2) 후보 개수 결정 (page 고려해서 넉넉히 뽑고 rerank로 다듬기)
-            int want = (page + 1) * size;
-            int fetchSize = clamp(
-                    Math.max(aiProps.getSearch().getMinCandidates(), want * aiProps.getSearch().getCandidateMultiplier()),
-                    aiProps.getSearch().getMinCandidates(),
-                    aiProps.getSearch().getMaxCandidates()
-            );
-
-            // 3) ES vector 검색(script_score)
-            Map<String, Object> esQuery = buildVectorQuery(qv, request.sort(), fetchSize);
-
-            Map<String, Object> esResp = elasticsearchWebClient.post()
-                    .uri("/" + esProps.getIndex().getBook() + "/_search")
-                    .bodyValue(esQuery)
-                    .retrieve()
-                    .bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {})
-                    .block();
-
-            List<Candidate> candidates = parseCandidates(esResp);
-            if (candidates.isEmpty()) {
-                return new BookSearchResponse(List.of(), 0L, page, size);
-            }
-
-            // 4) rerank
-            final int rerankTopK = 30;
-
-            List<Candidate> rerankTargets = candidates.subList(0, Math.min(rerankTopK, candidates.size()));
-            List<Candidate> rerankRest = candidates.subList(Math.min(rerankTopK, candidates.size()), candidates.size());
-
-            List<String> texts = rerankTargets.stream()
-                    .map(c -> truncate(buildRerankText(c), aiProps.getSearch().getRerankTextMaxLen()))
-                    .toList();
-
-            List<RerankItem> reranked = rerank(query, texts);
-            List<Candidate> orderedTop = applyRerank(rerankTargets, reranked);
-
-            // 상위 30개 rerank 결과 + 나머지는 원래 순서로 붙이기
-            List<Candidate> orderedByAi = new ArrayList<>(candidates.size());
-            orderedByAi.addAll(orderedTop);
-            orderedByAi.addAll(rerankRest);
-
-            // 5) LLM 검증 + 최종 재정렬 + 관련도 / 추천이유 생성
-            List<Candidate> llmVerified = verifyAndEnrichWithGemini(query, orderedByAi);
-
-            // 6) sort 처리
-            // - RELEVANCE: LLM이 최종 정렬한 순서 우선
-            // - 그 외: 사용자 정렬 우선 + (LLM relevance/AI score는 보조)
-            List<Candidate> finalList;
-            if (request.sort() == null || request.sort() == BookSortOption.RELEVANCE) {
-                finalList = llmVerified;
-            } else {
-                finalList = new ArrayList<>(llmVerified);
-                finalList.sort(buildSortComparator(request.sort()));
-            }
-
-            // 7) paging
-            int from = page * size;
-            if (from >= finalList.size()) {
-                return new BookSearchResponse(List.of(), finalList.size(), page, size);
-            }
-            int to = Math.min(from + size, finalList.size());
-
-            List<BookSearchResult> pageResults = finalList.subList(from, to).stream()
-                    .map(this::toResultWithLlm) // LLM 필드 포함해서 응답
-                    .toList();
-
-            return new BookSearchResponse(pageResults, finalList.size(), page, size);
+            // 캐시 hit면 즉시 반환 + 만료 임박이면 백그라운드 refresh
+            // miss면 AI 검색을 동기로 계산하고 TTL(3분)로 저장
+            return aiCache.getOrCompute(normalized, () -> aiSearchInternal(normalized));
 
         } catch (Exception e) {
-            // 실패 시 폴백
+            // 실패 시 폴백 (폴백 결과는 캐시에 넣지 않음)
             log.error("[AI] ai-search failed -> fallback to legacy. query='{}', sort={}, page={}, size={}",
                     request.query(), request.sort(), page, size, e);
-            return legacySearchService.search(new BookSearchRequest(request.query(), request.sort(), page, size));
+            return legacySearchService.search(normalized);
         }
+    }
+
+    // 기존 search() try 블록 내용을 그대로 분리 (예외는 밖으로 던져서 search()에서 폴백)
+    private BookSearchResponse aiSearchInternal(BookSearchRequest request) {
+        final int page = request.page();
+        final int size = request.size();
+
+        final String query = (request.query() == null) ? "" : request.query().trim();
+
+        // 1) query -> embedding
+        List<Float> qv = embed(query);
+
+        // 2) 후보 개수 결정 (page 고려해서 넉넉히 뽑고 rerank로 다듬기)
+        int want = (page + 1) * size;
+        int fetchSize = clamp(
+                Math.max(aiProps.getSearch().getMinCandidates(), want * aiProps.getSearch().getCandidateMultiplier()),
+                aiProps.getSearch().getMinCandidates(),
+                aiProps.getSearch().getMaxCandidates()
+        );
+
+        // 3) ES vector 검색(script_score)
+        Map<String, Object> esQuery = buildVectorQuery(qv, request.sort(), fetchSize);
+
+        Map<String, Object> esResp = elasticsearchWebClient.post()
+                .uri("/" + esProps.getIndex().getBook() + "/_search")
+                .bodyValue(esQuery)
+                .retrieve()
+                .bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {})
+                .block();
+
+        List<Candidate> candidates = parseCandidates(esResp);
+        if (candidates.isEmpty()) {
+            return new BookSearchResponse(List.of(), 0L, page, size);
+        }
+
+        // 4) rerank
+        final int rerankTopK = 30;
+
+        List<Candidate> rerankTargets = candidates.subList(0, Math.min(rerankTopK, candidates.size()));
+        List<Candidate> rerankRest = candidates.subList(Math.min(rerankTopK, candidates.size()), candidates.size());
+
+        List<String> texts = rerankTargets.stream()
+                .map(c -> truncate(buildRerankText(c), aiProps.getSearch().getRerankTextMaxLen()))
+                .toList();
+
+        List<RerankItem> reranked = rerank(query, texts);
+        List<Candidate> orderedTop = applyRerank(rerankTargets, reranked);
+
+        // 상위 30개 rerank 결과 + 나머지는 원래 순서로 붙이기
+        List<Candidate> orderedByAi = new ArrayList<>(candidates.size());
+        orderedByAi.addAll(orderedTop);
+        orderedByAi.addAll(rerankRest);
+
+        // 5) LLM 검증 + 최종 재정렬 + 관련도 / 추천이유 생성
+        List<Candidate> llmVerified = verifyAndEnrichWithGemini(query, orderedByAi);
+
+        // 6) sort 처리
+        // - RELEVANCE: LLM이 최종 정렬한 순서 우선
+        // - 그 외: 사용자 정렬 우선 + (LLM relevance/AI score는 보조)
+        List<Candidate> finalList;
+        if (request.sort() == null || request.sort() == BookSortOption.RELEVANCE) {
+            finalList = llmVerified;
+        } else {
+            finalList = new ArrayList<>(llmVerified);
+            finalList.sort(buildSortComparator(request.sort()));
+        }
+
+        // 7) paging
+        int from = page * size;
+        if (from >= finalList.size()) {
+            return new BookSearchResponse(List.of(), finalList.size(), page, size);
+        }
+        int to = Math.min(from + size, finalList.size());
+
+        List<BookSearchResult> pageResults = finalList.subList(from, to).stream()
+                .map(this::toResultWithLlm) // LLM 필드 포함해서 응답
+                .toList();
+
+        return new BookSearchResponse(pageResults, finalList.size(), page, size);
     }
 
     // ---------------------------
@@ -275,7 +299,6 @@ public class BookAiSearchService {
                 )
         );
     }
-
 
     // ---------- Rerank ----------
     private List<RerankItem> rerank(String query, List<String> texts) {
@@ -531,7 +554,6 @@ public class BookAiSearchService {
                 list.get(n / 2).llmRelevance,
                 list.get(n - 1).llmRelevance);
     }
-
 
     private void markRecommended(List<Candidate> list) {
         int topN = Math.min(3, list.size());

@@ -1,48 +1,48 @@
 ### 1. 기본 검색 (BM25 + 필드 가중치, 정확도 순)
 # - sort 파라미터 생략 시 RELEVANCE(정확도순) 기본
-GET http://127.0.0.1:10416/books/search?query=한강&page=0&size=10
+GET http://127.0.0.1:10416/search?query=한강&page=0&size=10
 Accept: application/json
 
 ###
 ### 2. 정렬 옵션별 검색 (NEW / LOW_PRICE / HIGH_PRICE / POPULARITY / RATING / REVIEW_COUNT)
 
 ### 2-1. 신상품 순 (발행일 기준 내림차순)
-GET http://127.0.0.1:10416/books/search?query=진격의거인&sort=NEW&page=0&size=10
+GET http://127.0.0.1:10416/search?query=진격의거인&sort=NEW&page=0&size=10
 Accept: application/json
 
 ###
 ### 2-2. 최저가 순 (가격 오름차순, 가격 null은 뒤로)
-GET http://127.0.0.1:10416/api/books/search?query=한강&sort=LOW_PRICE&page=0&size=10
+GET http://127.0.0.1:10416/search?query=한강&sort=LOW_PRICE&page=0&size=10
 Accept: application/json
 
 ###
 ### 2-3. 최고가 순 (가격 내림차순, 가격 null은 뒤로)
-GET http://127.0.0.1:10416/api/books/search?query=한강&sort=HIGH_PRICE&page=0&size=10
+GET http://127.0.0.1:10416/search?query=한강&sort=HIGH_PRICE&page=0&size=10
 Accept: application/json
 
 ###
 ### 2-4. 인기도 순 (popularityScore desc)
-GET http://127.0.0.1:10416/api/books/search?query=한강&sort=POPULARITY&page=0&size=10
+GET http://127.0.0.1:10416/search?query=한강&sort=POPULARITY&page=0&size=10
 Accept: application/json
 
 ###
 ### 2-5. 평점 순
-GET http://127.0.0.1:10416/api/books/search?query=한강&sort=RATING&page=0&size=10
+GET http://127.0.0.1:10416/search?query=한강&sort=RATING&page=0&size=10
 Accept: application/json
 
 ###
 ### 2-6. 리뷰 많은 순 (reviewCount desc)
-GET http://127.0.0.1:10416/api/books/search?query=한강&sort=REVIEW_COUNT&page=0&size=10
+GET http://127.0.0.1:10416/search?query=한강&sort=REVIEW_COUNT&page=0&size=10
 Accept: application/json
 
 ###
 ### 3-1. 리뷰 요약 검색 (reviewSummary)
-GET http://127.0.0.1:10416/api/books/9791168150102/review-summary
+GET http://127.0.0.1:10416/books/9791168150102/review-summary
 Accept: application/json
 
 ###
 ### 4-1. ai 검색 기본순
-GET http://127.0.0.1:10416/books/ai-search?query=주술&page=0&size=10
+GET http://127.0.0.1:10416/search/ai?query=한강 작가 도서&page=0&size=10
 Accept: application/json
 
 ###

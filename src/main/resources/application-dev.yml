@@ -16,6 +16,14 @@ spring:
     url: jdbc:mysql://s4.java21.net:13306/project_be12_team1?serverTimezone=Asia/Seoul&characterEncoding=UTF-8
     username: project_be12_team1
     password: ${DB_PASSWORD}
+
+  data:
+    redis:
+      host: s4.java21.net
+      port: 6379
+      password: ${REDIS_PW}
+      database: 356
+
   #    Infra Setting
   cloud:
     config:
