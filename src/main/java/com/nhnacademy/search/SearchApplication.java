@@ -12,10 +12,7 @@
 
 package com.nhnacademy.search;
 
-import com.nhnacademy.search.config.BookStatsSyncProperties;
-import com.nhnacademy.search.config.ElasticsearchProperties;
-import com.nhnacademy.search.config.GeminiProperties;
-import com.nhnacademy.search.config.ReviewSummaryPipelineProperties;
+import com.nhnacademy.search.config.*;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -25,7 +22,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 @SpringBootApplication
 @EnableScheduling
 @EnableDiscoveryClient
-@EnableConfigurationProperties({ElasticsearchProperties.class, GeminiProperties.class, ReviewSummaryPipelineProperties.class, BookStatsSyncProperties.class})
+@EnableConfigurationProperties({ElasticsearchProperties.class, GeminiProperties.class, ReviewSummaryPipelineProperties.class, BookStatsSyncProperties.class, PipelineEmbeddingBackfillProperties.class})
 public class SearchApplication {
 
     public static void main(String[] args) {
