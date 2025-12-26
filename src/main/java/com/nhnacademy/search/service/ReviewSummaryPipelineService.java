@@ -52,17 +52,15 @@ public class ReviewSummaryPipelineService {
             String summary = geminiClient.generateText(prompt);
             if (summary == null || summary.isBlank()) continue;
 
-            String out = summary.trim();
-
             // DB 저장
             try {
-                bookWriteRepo.updateReviewSummary(bookId, out);
+                bookWriteRepo.updateReviewSummary(bookId, summary.trim());
             } catch (Exception e) {
                 log.error("[ReviewSummaryPipeline] DB update failed. bookId={}", bookId, e);
             }
 
             // ES 저장 데이터 수집
-            isbnToSummary.put(isbn, out);
+            isbnToSummary.put(isbn, summary.trim());
         }
 
         if (isbnToSummary.isEmpty()) {
