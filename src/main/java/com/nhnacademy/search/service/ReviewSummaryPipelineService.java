@@ -35,6 +35,9 @@ public class ReviewSummaryPipelineService {
         Map<String, String> isbnToSummary = new LinkedHashMap<>();
 
         for (long bookId : bookIds) {
+            int totalReviews = reviewRepo.countAllReviewContentsByBookId(bookId);
+            if (totalReviews < 10) continue;
+
             List<String> reviews = reviewRepo.findRecentReviewContentsByBookId(bookId, perBookReviewLimit);
             if (reviews.isEmpty()) continue;
 

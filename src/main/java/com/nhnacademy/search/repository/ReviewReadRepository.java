@@ -26,6 +26,22 @@ public class ReviewReadRepository {
         return rows.stream().distinct().toList();
     }
 
+    // 전체 리뷰 개수(유효한 텍스트만)
+    public int countAllReviewContentsByBookId(long bookId) {
+        Integer c = jdbcTemplate.queryForObject(
+                """
+                select count(*)
+                from Review
+                where book_id = ?
+                  and reviewContents is not null
+                  and trim(reviewContents) <> ''
+                """,
+                Integer.class,
+                bookId
+        );
+        return (c == null) ? 0 : c;
+    }
+
     public List<String> findRecentReviewContentsByBookId(long bookId, int limit) {
         return jdbcTemplate.query(
                 """
