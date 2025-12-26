@@ -4,6 +4,7 @@ import com.nhnacademy.search.client.GeminiClient;
 import com.nhnacademy.search.config.ElasticsearchProperties;
 import com.nhnacademy.search.es.EsReviewSummaryUpdater;
 import com.nhnacademy.search.repository.BookIsbnReadRepository;
+import com.nhnacademy.search.repository.BookWriteRepository;
 import com.nhnacademy.search.repository.ReviewReadRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -29,12 +30,13 @@ class ReviewSummaryPipelineServiceTest {
     @Mock EsReviewSummaryUpdater esUpdater;
     @Mock ElasticsearchProperties esProps;
     @Mock ElasticsearchProperties.Index indexProps;
+    @Mock BookWriteRepository bookWriteRepo;
 
     ReviewSummaryPipelineService service;
 
     @BeforeEach
     void setUp() {
-        service = new ReviewSummaryPipelineService(reviewRepo, bookRepo, geminiClient, esUpdater, esProps);
+        service = new ReviewSummaryPipelineService(reviewRepo, bookRepo, bookWriteRepo, geminiClient, esUpdater, esProps);
     }
 
     @Test
