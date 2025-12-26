@@ -566,10 +566,9 @@ public class BookAiSearchService {
     }
 
     private void markRecommended(List<Candidate> list) {
-        int topN = Math.min(3, list.size());
-        for (int i = 0; i < list.size(); i++) {
-            Candidate c = list.get(i);
-            c.recommended = (i < topN) && (c.llmRelevance != null && c.llmRelevance >= 50);
+        for (Candidate c : list) {
+            c.recommended = Boolean.TRUE.equals(c.geminiEvaluated)
+                    && c.llmRelevance != null && c.llmRelevance >= 50;
         }
     }
 

@@ -60,7 +60,7 @@ content-Type: application/json
 
 ###
 ### 0-1 Text Embedding 예제
-POST http://ollama.java21.net/api/embeddings
+POST http://ollama/api/embeddings
 Content-Type: application/json
 
 {
