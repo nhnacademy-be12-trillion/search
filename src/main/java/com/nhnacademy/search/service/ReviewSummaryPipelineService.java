@@ -4,7 +4,7 @@ import com.nhnacademy.search.config.ElasticsearchProperties;
 import com.nhnacademy.search.es.EsReviewSummaryUpdater;
 import com.nhnacademy.search.client.GeminiClient;
 import com.nhnacademy.search.repository.BookIsbnReadRepository;
-import com.nhnacademy.search.repository.BookWriteRepository;
+//import com.nhnacademy.search.repository.BookWriteRepository;
 import com.nhnacademy.search.repository.ReviewReadRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -21,7 +21,7 @@ public class ReviewSummaryPipelineService {
 
     private final ReviewReadRepository reviewRepo;
     private final BookIsbnReadRepository bookRepo;
-    private final BookWriteRepository bookWriteRepo;
+//    private final BookWriteRepository bookWriteRepo;
     private final GeminiClient geminiClient;
     private final EsReviewSummaryUpdater esUpdater;
     private final ElasticsearchProperties esProps;
@@ -52,12 +52,14 @@ public class ReviewSummaryPipelineService {
             String summary = geminiClient.generateText(prompt);
             if (summary == null || summary.isBlank()) continue;
 
-            // DB 저장
-            try {
-                bookWriteRepo.updateReviewSummary(bookId, summary.trim());
-            } catch (Exception e) {
-                log.error("[ReviewSummaryPipeline] DB update failed. bookId={}", bookId, e);
-            }
+//            String out = summary.trim();
+//
+//            // DB 저장
+//            try {
+//                bookWriteRepo.updateReviewSummary(bookId, out);
+//            } catch (Exception e) {
+//                log.error("[ReviewSummaryPipeline] DB update failed. bookId={}", bookId, e);
+//            }
 
             // ES 저장 데이터 수집
             isbnToSummary.put(isbn, summary.trim());
