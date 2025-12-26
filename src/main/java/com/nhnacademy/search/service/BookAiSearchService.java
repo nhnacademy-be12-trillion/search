@@ -83,7 +83,7 @@ public class BookAiSearchService {
 
         } catch (Exception e) {
             // 실패 시 폴백 (폴백 결과는 캐시에 넣지 않음)
-            log.error("[AI] ai-search failed -> fallback to legacy. query='{}', sort={}, page={}, size={}",
+            log.warn("[AI] ai-search failed -> fallback to legacy. query='{}', sort={}, page={}, size={}",
                     request.query(), request.sort(), page, size, e);
             return legacySearchService.search(normalized);
         }
