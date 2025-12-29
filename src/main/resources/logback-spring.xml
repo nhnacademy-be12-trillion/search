@@ -1,22 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <configuration>
-    <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
+
+    <include resource="org/springframework/boot/logging/logback/base.xml"/>
 
     <property name="LOG_PATH" value="/app/logs"/>
-    <property name="APP_NAME" value="${LOG_FILENAME:-user-service}"/>
+    <property name="APP_NAME" value="${LOG_FILENAME:-app}"/>
 
-    <appender name="ROLLING_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+    <appender name="APP_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <file>${LOG_PATH}/${APP_NAME}.log</file>
         <encoder class="net.logstash.logback.encoder.LoggingEventCompositeJsonEncoder">
             <providers>
                 <timestamp/>
                 <logLevel/>
-                <threadName/>
                 <loggerName/>
+                <message/>
                 <pattern>
-                    <pattern>{"message":"%msg"}</pattern>
+                    <pattern>
+                        {"trillion-service":"${LOG_FILENAME:-unknown}"}
+                    </pattern>
                 </pattern>
                 <mdc/>
-                <stackTrace/>
+                <stackTrace>
+                    <fieldName>stack_trace</fieldName>
+                </stackTrace>
             </providers>
         </encoder>
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
@@ -26,6 +32,7 @@
     </appender>
 
     <root level="INFO">
-        <appender-ref ref="ROLLING_FILE"/>
+        <appender-ref ref="APP_FILE"/>
+        <appender-ref ref="CONSOLE"/>
     </root>
 </configuration>

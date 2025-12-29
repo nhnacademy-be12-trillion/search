@@ -39,13 +39,9 @@ jobs:
           password: ${{ secrets.GHCR_TOKEN }}
           registry: ${{ env.REGISTRY }}
 
-      - name: 이미지 태그 세팅
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: ${{ env.REGISTRY }}/${{ env.REGISTRY_OWNER }}/${{ env.IMAGE_NAME }}
-          tags: |
-            type=raw,value=latest # latest 태그 고정
+      - name: 새 태그 만들기
+        id: tag
+        run: echo "tag=sha-${GITHUB_SHA::7}" >> $GITHUB_OUTPUT
 
       - name: 도커 이미지 빌드 & 푸시
         uses: docker/build-push-action@v6
@@ -53,7 +49,9 @@ jobs:
           context: .
           file: ./Dockerfile
           push: true
-          tags: ${{ steps.meta.outputs.tags }}
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.REGISTRY_OWNER }}/${{ env.IMAGE_NAME }}:latest
+            ${{ env.REGISTRY }}/${{ env.REGISTRY_OWNER }}/${{ env.IMAGE_NAME }}:${{ steps.tag.outputs.tag }}
 
       - name: 파일 전송 및 배포
         uses: appleboy/ssh-action@v1.0.3
@@ -65,6 +63,70 @@ jobs:
           script: |
             SERVICE_NAME1="trillion-search-peer1"
             SERVICE_NAME2="trillion-search-peer2"
+            set -euo pipefail
+            IMAGE_REPO="ghcr.io/nhnacademy-be12-trillion/search-service"
+            NEW_TAG="${{ steps.tag.outputs.tag }}"
+
+            # 현재 실행 중인 이미지 태그 추출 (peer1 기준)
+            CURRENT_IMAGE=$(docker inspect --format='{{.Config.Image}}' "$SERVICE_NAME1" 2>/dev/null || echo "")
+            HAS_PREV="true"
+            if [ -z "$CURRENT_IMAGE" ]; then
+              HAS_PREV="false"
+            fi
+
+            PREV_TAG="${CURRENT_IMAGE##*:}"
+            if [ -z "$PREV_TAG" ] || [ "$PREV_TAG" = "$CURRENT_IMAGE" ]; then
+              PREV_TAG="latest"
+            fi
+
+            wait_healthy() {
+              local svc="$1"
+              echo "헬스 대기: $svc"
+              for i in {1..30}; do
+                status=$(docker inspect --format='{{if .State.Health}}{{.State.Health.Status}}{{else}}nohealth{{end}}' "$svc" 2>/dev/null || true)
+
+                if [ "$status" = "nohealth" ]; then
+                  echo "❌ $svc has no healthcheck. docker-compose.yml healthcheck 확인"
+                  docker compose ps "$svc" || true
+                  return 1
+                fi
+
+                if [ "$status" = "healthy" ]; then
+                  echo "✅ $svc healthy"
+                  sleep 5
+                  return 0
+                fi
+                if [ "$status" = "unhealthy" ]; then
+                  echo "❌ $svc unhealthy"
+                  docker compose logs --tail=200 "$svc" || true
+                  return 1
+                fi
+                echo "  상태: $status (retry $i)"
+                sleep 2
+              done
+              echo "❌ $svc health timeout"
+              docker compose logs --tail=200 "$svc" || true
+              return 1
+            }
+
+            deploy_with_tag() {
+              local tag="$1"
+              export SEARCH_IMAGE_TAG="$tag"
+              # 해당 태그 이미지 미리 pull (실패 빨리 감지)
+              docker pull "${IMAGE_REPO}:${tag}" >/dev/null
+
+              docker compose up -d --no-deps "$SERVICE_NAME1"
+              wait_healthy "$SERVICE_NAME1"
+
+              docker compose up -d --no-deps "$SERVICE_NAME2"
+              wait_healthy "$SERVICE_NAME2"
+            }
+
+            rollback() {
+              local tag="$1"
+              deploy_with_tag "$tag"
+              echo "✅ 롤백 완료: $tag"
+            }
 
             echo "SSH 접속 및 디렉토리 이동..."
             mkdir -p ${{ env.DEPLOY_DIR }}
@@ -73,21 +135,17 @@ jobs:
             echo "Docker Registry 로그인"
             echo ${{ secrets.GHCR_TOKEN }} | docker login ${{ env.REGISTRY }} -u ${{ env.REGISTRY_OWNER }} --password-stdin
 
-            echo "Search-service 롤링 업데이트 시작"
+            if ! deploy_with_tag "$NEW_TAG"; then
+              echo "❌ 배포 실패"
+              if [ "$HAS_PREV" = "true" ]; then
+                echo "→ 이전 태그로 롤백: $PREV_TAG"
+                rollback "$PREV_TAG"
+              else
+                echo "→ 첫 배포로 판단되어 롤백 스킵"
+              fi
+              exit 1
+            fi
 
-            echo "최신 이미지 Pull 및 Peer 1 재시작..."
-            docker compose rm -f ${SERVICE_NAME1}
-            docker compose pull ${SERVICE_NAME1}
-            docker compose up -d --no-deps ${SERVICE_NAME1}
-            
-            echo "최신 이미지 Pull 및 Peer 2 재시작..."
-            docker compose rm -f ${SERVICE_NAME2}
-            docker compose pull ${SERVICE_NAME2}
-            docker compose up -d --no-deps ${SERVICE_NAME2}
-            
-            echo "Search-Service 롤링 업데이트 완료!"
-
-            echo "Docker Registry 로그아웃..."
             docker logout ${{ env.REGISTRY }}
+            echo "Search Service Cluster 배포 완료! (tag=$NEW_TAG)"
 
-            echo "검색 서비스 배포 완료!"
