@@ -67,4 +67,18 @@ public class BookStatsReadRepository {
         for (ReviewAgg r : rows) map.put(r.bookId(), r);
         return map;
     }
+
+    // viewCount 단건 조회 (popularityScore 계산용)
+    public long findViewCountByBookId(long bookId) {
+        Long v = jdbcTemplate.queryForObject(
+                """
+                select viewCount
+                from Book
+                where bookId = ?
+                """,
+                Long.class,
+                bookId
+        );
+        return (v == null) ? 0L : v;
+    }
 }

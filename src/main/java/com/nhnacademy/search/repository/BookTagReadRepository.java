@@ -4,7 +4,11 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Repository
 @RequiredArgsConstructor
@@ -36,5 +40,44 @@ public class BookTagReadRepository {
                 ),
                 lastBookId, limit
         );
+    }
+
+    // 이번 batch의 bookId들로 태그 한번에 찾기 (단건 조회)
+    public Map<Long, BookTagsRow> findByBookIds(List<Long> bookIds) {
+        if (bookIds == null || bookIds.isEmpty()) {
+            return Collections.emptyMap();
+        }
+
+        String inClause = bookIds.stream()
+                .map(id -> "?")
+                .collect(Collectors.joining(", "));
+
+        String sql = """
+                SELECT
+                    b.bookId,
+                    b.isbn,
+                    GROUP_CONCAT(DISTINCT t.tag_name ORDER BY t.tag_name SEPARATOR ',') AS tags
+                FROM Book b
+                LEFT JOIN BookTag bt ON bt.book_id = b.bookId
+                LEFT JOIN Tag t ON t.tag_id = bt.tag_id
+                WHERE b.bookId IN (%s)
+                GROUP BY b.bookId, b.isbn
+                """.formatted(inClause);
+
+        List<BookTagsRow> rows = jdbcTemplate.query(
+                sql,
+                (rs, rowNum) -> new BookTagsRow(
+                        rs.getLong("bookId"),
+                        rs.getString("isbn"),
+                        rs.getString("tags")
+                ),
+                bookIds.toArray()
+        );
+
+        Map<Long, BookTagsRow> map = new HashMap<>();
+        for (BookTagsRow row : rows) {
+            map.put(row.bookId(), row);
+        }
+        return map;
     }
 }

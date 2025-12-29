@@ -160,7 +160,7 @@ class BookSearchServiceTest {
         BookSearchResult result = response.results().get(0);
         assertThat(result.id()).isEqualTo("1026048");
         assertThat(result.title()).isEqualTo("한강 수계 관리에 따른 수도권지역의 경비 분담 연구");
-        assertThat(result.price()).isNull();            // ⭐ 핵심: price는 null
+        assertThat(result.price()).isNull();            // price는 null
         assertThat(result.score()).isEqualTo(819.95154f);
     }
 
@@ -170,7 +170,7 @@ class BookSearchServiceTest {
         // given
         when(properties.getIndex().getBook()).thenReturn("nhnacademy_books");
 
-        // 결과는 안 중요하니 최소 형태로만 구성
+        // 결과는 안 중요 -> 최소 형태로 구성
         Map<String, Object> esResponse = new HashMap<>();
         Map<String, Object> hits = new HashMap<>();
         hits.put("total", Map.of("value", 0));
@@ -219,7 +219,7 @@ class BookSearchServiceTest {
         Map<String, Object> priceOptions =
                 (Map<String, Object>) priceEntry.getValue();
         assertThat(priceOptions.get("order")).isEqualTo("asc");
-        assertThat(priceOptions.get("missing")).isEqualTo("_last"); // ⭐ 가격 없는 문서는 뒤로
+        assertThat(priceOptions.get("missing")).isEqualTo("_last"); // 가격 없는 문서는 뒤로
 
         // 2순위: 같은 가격 안에서는 score desc
         Map<String, Object> scoreSort = sort.get(1);

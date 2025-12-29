@@ -5,14 +5,13 @@ import com.nhnacademy.search.dto.BookSearchResponse;
 import com.nhnacademy.search.dto.BookSortOption;
 import com.nhnacademy.search.service.BookAiSearchService;
 import com.nhnacademy.search.service.BookSearchService;
+import com.nhnacademy.search.service.BookSingleIndexService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/search")
@@ -22,6 +21,7 @@ public class BookSearchController {
 
     private final BookSearchService bookSearchService;
     private final BookAiSearchService bookAiSearchService;
+    private final BookSingleIndexService bookSingleIndexService;
 
     @Operation(
             summary = "도서 검색",
@@ -58,5 +58,38 @@ public class BookSearchController {
             @RequestParam(required = false, defaultValue = "20") int size
     ) {
         return bookAiSearchService.search(new BookSearchRequest(query, sort, page, size));
+    }
+
+    // 신규: isbn 기반 업서트
+    @Operation(summary = "신규 도서 인덱싱 (ISBN)", description = "DB 반영 지연을 고려해 내부 재시도를 수행한 뒤 ES(_id=bookId)에 upsert 합니다.")
+    @PostMapping("/index/isbn/{isbn}")
+    public ResponseEntity<Void> upsertByIsbn(
+            @Parameter(description = "ISBN", example = "9788986604009", required = true)
+            @PathVariable String isbn
+    ) {
+        bookSingleIndexService.upsertByIsbnWithRetry(isbn);
+        return ResponseEntity.noContent().build(); // 204
+    }
+
+    // 업데이트: bookId 기반 업서트
+    @Operation(summary = "도서 갱신 인덱싱 (bookId)", description = "DB에서 bookId로 조회 후 ES(_id=bookId)에 upsert 합니다.")
+    @PostMapping("/index/{bookId}")
+    public ResponseEntity<Void> upsertByBookId(
+            @Parameter(description = "bookId", example = "5981", required = true)
+            @PathVariable long bookId
+    ) {
+        bookSingleIndexService.upsertByBookId(bookId);
+        return ResponseEntity.noContent().build(); // 204
+    }
+
+    // ES 삭제
+    @Operation(summary = "도서 인덱스 삭제 (bookId)", description = "ES에서 _id=bookId 문서를 삭제합니다(없어도 성공).")
+    @DeleteMapping("/index/{bookId}")
+    public ResponseEntity<Void> deleteByBookId(
+            @Parameter(description = "bookId", example = "5981", required = true)
+            @PathVariable long bookId
+    ) {
+        bookSingleIndexService.deleteByBookId(bookId);
+        return ResponseEntity.noContent().build(); // 204
     }
 }

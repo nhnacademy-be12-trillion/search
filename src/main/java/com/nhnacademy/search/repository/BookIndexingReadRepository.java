@@ -8,6 +8,7 @@ import org.springframework.stereotype.Repository;
 import java.sql.Date;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 @RequiredArgsConstructor
@@ -100,5 +101,112 @@ public class BookIndexingReadRepository {
                 lastBookId,
                 pageSize
         );
+    }
+
+    // bookId 단건 조회
+    public Optional<BookIndexingRow> findByBookId(long bookId) {
+        String sql = """
+            SELECT
+                b.bookId,
+                b.isbn,
+                b.bookName,
+                b.bookDescription,
+                (
+                    SELECT bf.fileUrl
+                    FROM BookFile bf
+                    WHERE bf.joinedId = b.bookId
+                    ORDER BY bf.fileId ASC
+                    LIMIT 1
+                ) AS imageUrl,
+                b.bookPublicationDate,
+                b.bookRegularPrice,
+                b.bookSalePrice,
+                p.publisherName,
+                b.bookReviewSummary
+            FROM Book b
+            LEFT JOIN Publisher p
+              ON p.publisherId = b.publisher_publisherId
+            WHERE b.bookId = ?
+            LIMIT 1
+            """;
+
+        List<BookIndexingRow> rows = jdbcTemplate.query(
+                sql,
+                (rs, rowNum) -> {
+                    Date pubDate = rs.getDate("bookPublicationDate");
+                    LocalDate publicationDate =
+                            (pubDate != null) ? pubDate.toLocalDate() : null;
+
+                    return new BookIndexingRow(
+                            rs.getLong("bookId"),
+                            rs.getString("isbn"),
+                            rs.getString("bookName"),
+                            rs.getString("bookDescription"),
+                            rs.getString("imageUrl"),
+                            publicationDate,
+                            (Integer) rs.getObject("bookRegularPrice"),
+                            (Integer) rs.getObject("bookSalePrice"),
+                            rs.getString("publisherName"),
+                            rs.getString("bookReviewSummary")
+                    );
+                },
+                bookId
+        );
+
+        return rows.stream().findFirst();
+    }
+
+    // isbn 단건 조회
+    public Optional<BookIndexingRow> findByIsbn(String isbn) {
+        String sql = """
+            SELECT
+                b.bookId,
+                b.isbn,
+                b.bookName,
+                b.bookDescription,
+                (
+                    SELECT bf.fileUrl
+                    FROM BookFile bf
+                    WHERE bf.joinedId = b.bookId
+                    ORDER BY bf.fileId ASC
+                    LIMIT 1
+                ) AS imageUrl,
+                b.bookPublicationDate,
+                b.bookRegularPrice,
+                b.bookSalePrice,
+                p.publisherName,
+                b.bookReviewSummary
+            FROM Book b
+            LEFT JOIN Publisher p
+              ON p.publisherId = b.publisher_publisherId
+            WHERE b.isbn = ?
+            ORDER BY b.bookId DESC
+            LIMIT 1
+            """;
+
+        List<BookIndexingRow> rows = jdbcTemplate.query(
+                sql,
+                (rs, rowNum) -> {
+                    Date pubDate = rs.getDate("bookPublicationDate");
+                    LocalDate publicationDate =
+                            (pubDate != null) ? pubDate.toLocalDate() : null;
+
+                    return new BookIndexingRow(
+                            rs.getLong("bookId"),
+                            rs.getString("isbn"),
+                            rs.getString("bookName"),
+                            rs.getString("bookDescription"),
+                            rs.getString("imageUrl"),
+                            publicationDate,
+                            (Integer) rs.getObject("bookRegularPrice"),
+                            (Integer) rs.getObject("bookSalePrice"),
+                            rs.getString("publisherName"),
+                            rs.getString("bookReviewSummary")
+                    );
+                },
+                isbn
+        );
+
+        return rows.stream().findFirst();
     }
 }
