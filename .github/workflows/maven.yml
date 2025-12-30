@@ -28,6 +28,13 @@ jobs:
           distribution: 'temurin'
           cache: 'maven'
 
+      # Sonarqube
+      - name: Run SonarQube
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST}}
+        run: mvn clean verify org.sonarsource.scanner.maven:sonar-maven-plugin:sonar -Dsonar.projectKey=nhnacademy-be12-trillion-search -Dsonar.host.url=$SONAR_HOST_URL -Dsonar.token=$SONAR_TOKEN
+
 
       - name: Build with Maven
         run: mvn clean package -DskipTests

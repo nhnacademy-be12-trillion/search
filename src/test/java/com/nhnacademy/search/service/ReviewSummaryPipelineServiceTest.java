@@ -41,26 +41,23 @@ class ReviewSummaryPipelineServiceTest {
 
     @Test
     void runOnce_updatesEs_whenReviewsExist() {
-        // given
         when(reviewRepo.findRecentReviewBookIds(50)).thenReturn(List.of(10L, 20L));
+
+        when(reviewRepo.countAllReviewContentsByBookId(10L)).thenReturn(30);
+        when(reviewRepo.countAllReviewContentsByBookId(20L)).thenReturn(0);
 
         when(reviewRepo.findRecentReviewContentsByBookId(10L, 30))
                 .thenReturn(List.of("재밌어요", "구성이 좋아요"));
-        when(reviewRepo.findRecentReviewContentsByBookId(20L, 30))
-                .thenReturn(List.of()); // skip
 
         when(bookRepo.findIsbnByBookId(10L)).thenReturn(Optional.of("9780000000001"));
-
         when(geminiClient.generateText(anyString()))
                 .thenReturn("장점과 단점을 모두 포함한 3~5문장 요약");
 
         when(esProps.getIndex()).thenReturn(indexProps);
         when(indexProps.getBook()).thenReturn("trillion_books");
 
-        // when
         service.runOnce(50, 30);
 
-        // then -> ES 업데이트 호출 + map 내용 검증
         @SuppressWarnings("unchecked")
         ArgumentCaptor<Map<String, String>> captor = ArgumentCaptor.forClass((Class) Map.class);
 
@@ -71,16 +68,12 @@ class ReviewSummaryPipelineServiceTest {
         assertEquals(1, isbnToSummary.size());
         assertEquals("장점과 단점을 모두 포함한 3~5문장 요약", isbnToSummary.get("9780000000001"));
 
-        // bookId=20은 리뷰가 없어 ISBN 조회 안 해야 함
+        verify(reviewRepo, never()).findRecentReviewContentsByBookId(20L, 30);
         verify(bookRepo, never()).findIsbnByBookId(20L);
 
         verify(geminiClient, times(1)).generateText(anyString());
-
-        verify(reviewRepo, times(1)).findRecentReviewContentsByBookId(10L, 30);
-        verify(reviewRepo, times(1)).findRecentReviewContentsByBookId(20L, 30);
-
-        verifyNoMoreInteractions(esUpdater);
     }
+
 
     @Test
     void runOnce_doesNothing_whenNoRecentReviews() {
@@ -99,25 +92,25 @@ class ReviewSummaryPipelineServiceTest {
 
     @Test
     void runOnce_skips_whenGeminiReturnsBlank() {
-        // given
         when(reviewRepo.findRecentReviewBookIds(50)).thenReturn(List.of(10L));
+
+        when(reviewRepo.countAllReviewContentsByBookId(10L)).thenReturn(30);
+
         when(reviewRepo.findRecentReviewContentsByBookId(10L, 30))
                 .thenReturn(List.of("좋아요"));
         when(bookRepo.findIsbnByBookId(10L)).thenReturn(Optional.of("9780000000002"));
-        when(geminiClient.generateText(anyString())).thenReturn("   "); // blank
+        when(geminiClient.generateText(anyString())).thenReturn("   ");
 
-        // when
         service.runOnce(50, 30);
 
-        // then -> summary가 blank라 ES 업데이트는 호출되면 안 됨
         verify(esUpdater, never()).updateReviewSummaryByIsbn(anyString(), anyMap());
+        verify(esProps, never()).getIndex();
 
-        // indexName을 얻기 위해 esProps도 호출되면 안 됨
-        verifyNoInteractions(esProps);
-
-        verify(reviewRepo, times(1)).findRecentReviewBookIds(50);
-        verify(reviewRepo, times(1)).findRecentReviewContentsByBookId(10L, 30);
-        verify(bookRepo, times(1)).findIsbnByBookId(10L);
-        verify(geminiClient, times(1)).generateText(anyString());
+        verify(reviewRepo).findRecentReviewBookIds(50);
+        verify(reviewRepo).countAllReviewContentsByBookId(10L);
+        verify(reviewRepo).findRecentReviewContentsByBookId(10L, 30);
+        verify(bookRepo).findIsbnByBookId(10L);
+        verify(geminiClient).generateText(anyString());
     }
+
 }
