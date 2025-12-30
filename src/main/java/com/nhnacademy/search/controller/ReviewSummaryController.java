@@ -9,7 +9,7 @@ import io.swagger.v3.oas.annotations.Parameter;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/books")
+@RequestMapping("/review-summary")
 @RequiredArgsConstructor
 @Tag(name = "Reviews", description = "리뷰 요약 API")
 public class ReviewSummaryController {
@@ -17,7 +17,7 @@ public class ReviewSummaryController {
     private final ReviewSummaryService reviewSummaryService;
 
     @Operation(summary = "리뷰 요약 조회", description = "ISBN으로 ES에 저장된 리뷰 요약을 조회합니다. 없으면 null일 수 있습니다.")
-    @GetMapping("/{isbn}/review-summary")
+    @GetMapping("/{isbn}")
     public ReviewSummaryResponse reviewSummary(@Parameter(description = "ISBN", example = "9781234567890", required = true) @PathVariable String isbn) {
         String summary = reviewSummaryService.findReviewSummaryByIsbn(isbn);
         return new ReviewSummaryResponse(summary);
