@@ -71,7 +71,7 @@ public class BookSearchService {
         multiMatch.put("query", req.query());
         multiMatch.put("type", "best_fields");
         multiMatch.put("operator", "or");
-        multiMatch.put("minimum_should_match", "2<60%");
+        multiMatch.put("minimum_should_match", "1");
         multiMatch.put("fields", List.of(
                 "metadata.title^100",
                 "title^100",
