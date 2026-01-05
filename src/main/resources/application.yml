@@ -2,7 +2,7 @@ spring:
   application:
     name: search-service
   config:
-    import: configserver:${CONFIG_SERVER_URI:http://localhost:10418}
+    import: optional:configserver:${CONFIG_SERVER_URI:http://localhost:10418}
   cloud:
     config:
       username: be12-team1

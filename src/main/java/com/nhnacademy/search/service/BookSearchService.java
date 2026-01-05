@@ -70,8 +70,7 @@ public class BookSearchService {
         Map<String, Object> multiMatch = new HashMap<>();
         multiMatch.put("query", req.query());
         multiMatch.put("type", "best_fields");
-        multiMatch.put("operator", "or");
-        multiMatch.put("minimum_should_match", "1");
+        multiMatch.put("operator", "and");
         multiMatch.put("fields", List.of(
                 "metadata.title^100",
                 "title^100",
