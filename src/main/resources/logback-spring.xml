@@ -4,10 +4,11 @@
     <include resource="org/springframework/boot/logging/logback/base.xml"/>
 
     <property name="LOG_PATH" value="/app/logs"/>
-    <property name="APP_NAME" value="${LOG_FILENAME:unknown-service}"/>
+    <property name="APP_NAME" value="trillion-search"/>
+    <property name="INSTANCE_ID" value="${HOSTNAME:-default}"/>
 
     <appender name="APP_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <file>${LOG_PATH}/${APP_NAME}.log</file>
+        <file>${LOG_PATH}/${APP_NAME}-${INSTANCE_ID}.log</file>
         <encoder class="net.logstash.logback.encoder.LoggingEventCompositeJsonEncoder">
             <providers>
                 <timestamp/>
@@ -16,7 +17,7 @@
                 <message/>
                 <pattern>
                     <pattern>
-                        {"trillion-service":"${LOG_FILENAME:-unknown}"}
+                        {"trillion-service":"${APP_NAME}","instance":"${INSTANCE_ID}"}
                     </pattern>
                 </pattern>
                 <mdc/>
@@ -26,10 +27,11 @@
             </providers>
         </encoder>
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-            <fileNamePattern>${LOG_PATH}/${APP_NAME}-%d{yyyy-MM-dd}.log</fileNamePattern>
+            <fileNamePattern>${LOG_PATH}/${APP_NAME}-${INSTANCE_ID}-%d{yyyy-MM-dd}.log</fileNamePattern>
             <maxHistory>7</maxHistory>
         </rollingPolicy>
     </appender>
+
     <springProfile name="!dev">
         <springProfile name="!local">
             <root level="INFO">
@@ -38,4 +40,5 @@
             </root>
         </springProfile>
     </springProfile>
+
 </configuration>
