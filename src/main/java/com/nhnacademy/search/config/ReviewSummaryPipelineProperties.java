@@ -8,7 +8,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 @Setter
 @ConfigurationProperties(prefix = "pipeline.review-summary")
 public class ReviewSummaryPipelineProperties {
-    private boolean enabled = true;
+    private boolean enabled = false;
     private boolean runOnStartup = true;
     private int recentReviewLimit = 50;
     private int perBookReviewLimit = 30;

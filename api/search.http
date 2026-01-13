@@ -37,7 +37,7 @@ Accept: application/json
 
 ###
 ### 3-1. 리뷰 요약 검색 (reviewSummary)
-GET http://127.0.0.1:10416/books/9791168150102/review-summary
+GET http://127.0.0.1:10416/review-summary/9791168150102
 Accept: application/json
 
 ###
