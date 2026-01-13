@@ -52,8 +52,8 @@ pipeline:
     cron: "0 10 3 * * *"
 
   review-summary:
-    enabled: false            # 풀 리인덱스 동안은 false
-    run-on-startup: false
+    enabled: true            # 풀 리인덱스 동안은 false
+    run-on-startup: true
     recent-review-limit: 50
     per-book-review-limit: 50
     cron: "0 30 2 * * *"
