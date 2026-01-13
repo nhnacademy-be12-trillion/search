@@ -9,6 +9,7 @@ import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 
+import java.util.List;
 import java.util.Map;
 
 @Slf4j
@@ -31,22 +32,39 @@ public class EsReviewSummaryUpdater {
             return;
         }
 
+        var keys = isbnToSummary.keySet();
+
         Map<String, Object> body = Map.of(
-                "query", Map.of("terms", Map.of("metadata.isbn.keyword", isbnToSummary.keySet())),
+                "query", Map.of(
+                        "bool", Map.of(
+                                "should", List.of(
+                                        Map.of("terms", Map.of("metadata.isbn", keys)),
+                                        Map.of("terms", Map.of("isbn", keys))
+                                ),
+                                "minimum_should_match", 1
+                        )
+                ),
                 "script", Map.of(
                         "lang", "painless",
                         "source", """
-                            if (ctx._source.metadata == null) return;
-                            def k = ctx._source.metadata.isbn;
-                            if (k == null) return;
-                            k = k.toString().trim();
-                            def v = params.m.get(k);
-                            if (v == null) return;
-                            ctx._source.metadata.reviewSummary = v;
-                        """,
+            def isbn = null;
+            if (ctx._source.metadata != null && ctx._source.metadata.isbn != null) {
+                isbn = ctx._source.metadata.isbn.toString().trim();
+            } else if (ctx._source.isbn != null) {
+                isbn = ctx._source.isbn.toString().trim();
+            }
+            if (isbn == null) return;
+
+            def v = params.m.get(isbn);
+            if (v == null) return;
+
+            if (ctx._source.metadata == null) ctx._source.metadata = new HashMap();
+            ctx._source.metadata.reviewSummary = v;
+        """,
                         "params", Map.of("m", isbnToSummary)
                 )
         );
+
 
         String resp = esWebClient.post()
                 .uri("/{index}/_update_by_query?conflicts=proceed&refresh=true", indexName)
