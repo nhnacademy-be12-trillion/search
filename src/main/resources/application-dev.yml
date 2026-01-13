@@ -56,7 +56,7 @@ pipeline:
     run-on-startup: true
     recent-review-limit: 50
     per-book-review-limit: 50
-    cron: "0 30 2 * * *"
+    cron: "0 40 18 * * *"
 
   book-stats:
     enabled: false             # 풀 리인덱스 동안은 false

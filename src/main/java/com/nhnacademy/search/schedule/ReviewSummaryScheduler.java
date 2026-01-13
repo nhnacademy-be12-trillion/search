@@ -29,7 +29,7 @@ public class ReviewSummaryScheduler {
     }
 
     // 매일 새벽 2시 30분
-    @Scheduled(cron = "${pipeline.review-summary.cron:0 30 2 * * *}", zone = "Asia/Seoul")
+    @Scheduled(cron = "${pipeline.review-summary.cron:0 40 18 * * *}", zone = "Asia/Seoul")
     public void runNightly() {
         if (!props.isEnabled()) return;
         runSafely("scheduled");
