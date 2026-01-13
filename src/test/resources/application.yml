@@ -26,6 +26,7 @@ spring:
     username: sa
     password:
 
+
 eureka:
   client:
     enabled: false
@@ -38,3 +39,7 @@ GEMINI_SEARCH_KEY: dummy
 OLLAMA_BASE_URL: http://localhost
 RERANKER_BASE_URL: http://localhost
 
+pipeline:
+  review-summary:
+    enabled: false
+    run-on-startup: false

@@ -13,7 +13,7 @@ import org.springframework.stereotype.Component;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-@Order(2)
+@Order(1)
 @ConditionalOnProperty(prefix = "pipeline.review-summary", name = "enabled", havingValue = "true")
 public class ReviewSummaryRunner implements ApplicationRunner {
 
